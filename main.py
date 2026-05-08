@@ -1,6 +1,6 @@
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
-from src.abidos_calculator import build_calculation_prices, get_required_materials, can_craft
+import src.abidos_calculator as ac
 
 
 CATEGORY_CODES = {
@@ -21,14 +21,17 @@ def get_abidos_price() -> dict:
 
 lumber_prices = get_lumber_prices()
 abidos_price = get_abidos_price()
-result = build_calculation_prices(lumber_prices)
+result = ac.build_calculation_prices(lumber_prices)
 
-required_materials = get_required_materials()
+required_materials = ac.get_required_materials()
 owned_materials = {
-    "목재" : 99999,
-    "부드러운목재" : 9999,
-    "아비도스목재" : 99999
+    "목재" : 3333,
+    "부드러운목재" : 2222,
+    "아비도스목재" : 1111
 }
-print(can_craft(owned_materials,required_materials))
+if not ac.can_craft(owned_materials,required_materials):
+    missing_materials = ac.get_missing_materials(owned_materials,required_materials)
+    
+    
 
 
