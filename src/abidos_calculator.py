@@ -1,10 +1,6 @@
 import math
+from src.constants import REQUIRED_PER_CRAFT
 
-REQUIRED_PER_CRAFT = {
-    "목재": 112,
-    "부드러운 목재": 59,
-    "아비도스 목재": 43,
-}
 def round_up_to_unit(amount: int, unit: int = 100) -> int:
     """
     수량을 unit 단위로 올림한다.

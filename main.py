@@ -1,12 +1,8 @@
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
 import src.abidos_calculator as ac
+from src.constants import CATEGORY_CODES, WOOD, SOFT_WOOD, ABIDOS_WOOD
 
-
-CATEGORY_CODES = {
-    "재련재료": 50010,
-    "벌목전리품": 90300,
-}
 
 
 def get_lumber_prices() -> dict:
@@ -25,9 +21,9 @@ prices = ac.build_calculation_prices(lumber_prices)
 
 required_materials = ac.get_required_materials()
 owned_materials = {
-    "목재" : 3333,
-    "부드러운 목재" : 2222,
-    "아비도스 목재" : 1111
+    WOOD : 3333,
+    SOFT_WOOD : 2222,
+    ABIDOS_WOOD : 1111
 }
 result  = ac.calculate_direct_purchase_plan(owned_materials, prices)
 import json
