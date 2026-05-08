@@ -1,5 +1,7 @@
 import math
-from src.constants import REQUIRED_PER_CRAFT
+from src.constants import (REQUIRED_PER_CRAFT, CATEGORY_CODES, EXCHANGE_RECIPES, POWDER,)
+
+
 
 def round_up_to_unit(amount: int, unit: int = 100) -> int:
     """
@@ -7,6 +9,9 @@ def round_up_to_unit(amount: int, unit: int = 100) -> int:
     예: 1 -> 100, 101 -> 200
     """
     return math.ceil(amount / unit) * unit
+
+
+
 
 def build_calculation_prices(raw_prices:dict) ->dict:
     '''
@@ -48,6 +53,7 @@ def get_missing_materials(owned_materials:dict, required_materials:dict) -> dict
             result[name] = required_amount - owned_amount
     return result
 
+
 def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
     '''
     제작에 부족한 재료의 구매 가격을 계산하여 반환
@@ -61,6 +67,18 @@ def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
             "buy_amount" : buy_amount,
             "cost" : buy_amount * price // 100
         }
+    return result
+
+def calculate_remaining_materials(materials: dict, required_materials: dict) -> dict:
+    """
+    제작 후 남는 재료를 계산한다.
+    """
+    result = {}
+
+    for name, owned_amount in materials.items():
+        required_amount = required_materials.get(name, 0)
+        result[name] = owned_amount - required_amount
+
     return result
 
 def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_count: int = 40) -> dict:
@@ -94,14 +112,37 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
         "total_cost": total_cost
     }
 
-def calculate_remaining_materials(materials: dict, required_materials: dict) -> dict:
+def calculate_exchangeable_powder(materials: dict) -> dict:
     """
-    제작 후 남는 재료를 계산한다.
+    보유 재료로 교환 가능한 가루 수량을 계산한다.
     """
     result = {}
+    total_powder = 0
 
-    for name, owned_amount in materials.items():
-        required_amount = required_materials.get(name, 0)
-        result[name] = owned_amount - required_amount
+    for material_name, recipe in EXCHANGE_RECIPES.items():
+
+        owned_material = materials.get(material_name, 0)
+
+        required_amount = recipe["required_amount"]
+        powder_amount = recipe["powder_amount"]
+
+        exchange_count = owned_material // required_amount
+
+        used_material = exchange_count * required_amount
+
+        gained_powder = exchange_count * powder_amount
+
+        remaining_material = owned_material - used_material
+
+        result[material_name] = {
+            "exchange_count": exchange_count,
+            "used_material": used_material,
+            "gained_powder": gained_powder,
+            "remaining_material": remaining_material,
+        }
+
+        total_powder += gained_powder
+
+    result[POWDER] = total_powder
 
     return result
