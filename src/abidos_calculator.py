@@ -84,6 +84,7 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
             after_purchase_materials.get(name, 0)
             + plan["buy_amount"]
         )
+    after_craft_materials = calculate_remaining_materials(after_purchase_materials, required_materials)
 
     return {
         "craft_count": craft_count,
@@ -93,6 +94,18 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
         "purchase_plan": purchase_plan,
         "after_purchase_materials": after_purchase_materials,
         "can_craft_after_purchase": can_craft(after_purchase_materials, required_materials),
-        "total_cost": total_cost,
+        "after_craft_materials": after_craft_materials,
+        "total_cost": total_cost
     }
 
+def calculate_remaining_materials(materials: dict, required_materials: dict) -> dict:
+    """
+    제작 후 남는 재료를 계산한다.
+    """
+    result = {}
+
+    for name, owned_amount in materials.items():
+        required_amount = required_materials.get(name, 0)
+        result[name] = owned_amount - required_amount
+
+    return result
