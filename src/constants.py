@@ -15,19 +15,19 @@ REQUIRED_PER_CRAFT = {
 
 EXCHANGE_RECIPES = {
     WOOD: {
-        "required_amount": 100,
-        "powder_amount": 80,
+        "필요갯수": 100,
+        "획득갯수": 80,
     },
 
     SOFT_WOOD: {
-        "required_amount": 50,
-        "powder_amount": 80,
+        "필요갯수": 50,
+        "획득갯수": 80,
     }
 }
 
 POWDER_TO_ABIDOS_RECIPE = {
-    "required_amount": 100,
-    "abidos_amount": 10,
+    "필요갯수": 100,
+    "획득갯수": 10,
 }
 
 # 로스트아크 API 카테고리 코드

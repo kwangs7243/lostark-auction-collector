@@ -19,7 +19,7 @@ def build_calculation_prices(raw_prices:dict) ->dict:
     '''
     prices = {}
     for name,price_info in raw_prices.items():
-        prices[name] = max(price_info["min_price"], price_info["recent_price"])
+        prices[name] = max(price_info["최저가"], price_info["최근가"])
 
     return prices
 
@@ -63,9 +63,9 @@ def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
         price = prices.get(name, 0)
         buy_amount = round_up_to_unit(missing_amount, 100)
         result[name] = {
-            "missing_amount" : missing_amount,
-            "buy_amount" : buy_amount,
-            "cost" : buy_amount * price // 100
+            "부족한재료" : missing_amount,
+            "구매재료" : buy_amount,
+            "비용" : buy_amount * price // 100
         }
     return result
 
@@ -89,27 +89,27 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
     missing_materials = get_missing_materials(owned_materials, required_materials)
     purchase_plan = calculate_missing_cost(prices, missing_materials)
 
-    total_cost = sum(item["cost"] for item in purchase_plan.values())
+    total_cost = sum(item["비용"] for item in purchase_plan.values())
 
     after_purchase_materials = owned_materials.copy()
 
     for name, plan in purchase_plan.items():
         after_purchase_materials[name] = (
             after_purchase_materials.get(name, 0)
-            + plan["buy_amount"]
+            + plan["구매재료"]
         )
     after_craft_materials = calculate_remaining_materials(after_purchase_materials, required_materials)
 
     return {
-        "craft_count": craft_count,
-        "can_craft_before_purchase": can_craft(owned_materials, required_materials),
-        "required_materials": required_materials,
-        "missing_materials": missing_materials,
-        "purchase_plan": purchase_plan,
-        "after_purchase_materials": after_purchase_materials,
-        "can_craft_after_purchase": can_craft(after_purchase_materials, required_materials),
-        "after_craft_materials": after_craft_materials,
-        "total_cost": total_cost
+        "제작횟수": craft_count,
+        "구매전 제작가능여부": can_craft(owned_materials, required_materials),
+        "필요재료": required_materials,
+        "부족한재료": missing_materials,
+        "구매계획": purchase_plan,
+        "구매후 재료": after_purchase_materials,
+        "구매후 제작가능여부": can_craft(after_purchase_materials, required_materials),
+        "제작후 남은재료": after_craft_materials,
+        "총구매비용": total_cost
     }
 
 def calculate_exchangeable_powder(materials: dict) -> dict:
@@ -123,8 +123,8 @@ def calculate_exchangeable_powder(materials: dict) -> dict:
 
         owned_material = materials.get(material_name, 0)
 
-        required_amount = recipe["required_amount"]
-        powder_amount = recipe["powder_amount"]
+        required_amount = recipe["필요갯수"]
+        powder_amount = recipe["획득갯수"]
 
         exchange_count = owned_material // required_amount
 
@@ -135,10 +135,10 @@ def calculate_exchangeable_powder(materials: dict) -> dict:
         remaining_material = owned_material - used_material
 
         result[material_name] = {
-            "exchange_count": exchange_count,
-            "used_material": used_material,
-            "gained_powder": gained_powder,
-            "remaining_material": remaining_material,
+            "교환횟수": exchange_count,
+            "사용재료": used_material,
+            "획득가루": gained_powder,
+            "남은재료": remaining_material,
         }
 
         total_powder += gained_powder
