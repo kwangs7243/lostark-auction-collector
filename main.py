@@ -1,5 +1,6 @@
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
+from src.abidos_calculator import build_calculation_prices
 
 
 CATEGORY_CODES = {
@@ -21,6 +22,9 @@ def get_abidos_price() -> dict:
 lumber_prices = get_lumber_prices()
 abidos_price = get_abidos_price()
 
+result = build_calculation_prices(lumber_prices)
 
-print(lumber_prices)
-print(abidos_price)
+print(result)
+
+
+
