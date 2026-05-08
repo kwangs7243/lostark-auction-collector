@@ -1,8 +1,16 @@
+import math
+
 REQUIRED_PER_CRAFT = {
     "목재": 112,
-    "부드러운목재": 59,
-    "아비도스목재": 43,
+    "부드러운 목재": 59,
+    "아비도스 목재": 43,
 }
+def round_up_to_unit(amount: int, unit: int = 100) -> int:
+    """
+    수량을 unit 단위로 올림한다.
+    예: 1 -> 100, 101 -> 200
+    """
+    return math.ceil(amount / unit) * unit
 
 def build_calculation_prices(raw_prices:dict) ->dict:
     '''
@@ -48,4 +56,14 @@ def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
     '''
     제작에 부족한 재료의 구매 가격을 계산하여 반환
     '''
+    result = {}
+    for name, missing_amount in missing_materials.items():
+        price = prices.get(name, 0)
+        buy_amount = round_up_to_unit(missing_amount, 100)
+        result[name] = {
+            "missing_amount" : missing_amount,
+            "buy_amount" : buy_amount,
+            "cost" : buy_amount * price // 100
+        }
 
+    return result

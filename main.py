@@ -21,16 +21,18 @@ def get_abidos_price() -> dict:
 
 lumber_prices = get_lumber_prices()
 abidos_price = get_abidos_price()
-result = ac.build_calculation_prices(lumber_prices)
+prices = ac.build_calculation_prices(lumber_prices)
 
 required_materials = ac.get_required_materials()
 owned_materials = {
     "목재" : 3333,
-    "부드러운목재" : 2222,
-    "아비도스목재" : 1111
+    "부드러운 목재" : 2222,
+    "아비도스 목재" : 1111
 }
 if not ac.can_craft(owned_materials,required_materials):
     missing_materials = ac.get_missing_materials(owned_materials,required_materials)
+    result = ac.calculate_missing_cost(prices,missing_materials)
+    print(result)
     
     
 
