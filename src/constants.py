@@ -11,7 +11,7 @@ REQUIRED_PER_CRAFT = {
     ABIDOS_WOOD: 43,
 }
 
-# 교환 비율
+# 교환 레시피
 
 EXCHANGE_RECIPES = {
     WOOD: {

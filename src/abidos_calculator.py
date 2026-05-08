@@ -1,5 +1,5 @@
 import math
-from src.constants import (REQUIRED_PER_CRAFT, CATEGORY_CODES, EXCHANGE_RECIPES, POWDER,)
+from src.constants import (REQUIRED_PER_CRAFT, EXCHANGE_RECIPES, POWDER, POWDER_TO_ABIDOS_RECIPE)
 
 
 
@@ -9,8 +9,6 @@ def round_up_to_unit(amount: int, unit: int = 100) -> int:
     예: 1 -> 100, 101 -> 200
     """
     return math.ceil(amount / unit) * unit
-
-
 
 
 def build_calculation_prices(raw_prices:dict) ->dict:
@@ -146,3 +144,21 @@ def calculate_exchangeable_powder(materials: dict) -> dict:
     result[POWDER] = total_powder
 
     return result
+
+def calculate_exchangeable_abidos(exchange_result: dict) -> dict:
+    """,
+    가루로 교환 가능한 아비도스 목재 수량을 계산한다.
+    """
+    powder_amount = exchange_result.get(POWDER, 0)
+
+    exchange_count = powder_amount // POWDER_TO_ABIDOS_RECIPE["필요갯수"]
+    used_powder = exchange_count * POWDER_TO_ABIDOS_RECIPE["필요갯수"]
+    gained_abidos = exchange_count * POWDER_TO_ABIDOS_RECIPE["획득갯수"]
+    remaining_powder = powder_amount - used_powder
+
+    return {
+        "교환횟수": exchange_count,
+        "사용가루": used_powder,
+        "획득아비도스목재": gained_abidos,
+        "남은가루": remaining_powder,
+    }

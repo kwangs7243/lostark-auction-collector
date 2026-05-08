@@ -1,7 +1,7 @@
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
 import src.abidos_calculator as ac
-from src.constants import CATEGORY_CODES, WOOD, SOFT_WOOD, ABIDOS_WOOD, REQUIRED_PER_CRAFT
+from src.constants import CATEGORY_CODES, WOOD, SOFT_WOOD, ABIDOS_WOOD
 
 
 
@@ -28,7 +28,7 @@ owned_materials = {
 
 import json
 def get_json(data):
-    return(json.dumps(data, ensure_ascii=False, indent=False))
+    return(json.dumps(data, ensure_ascii=False, indent=4))
 data = ac.calculate_exchangeable_powder(owned_materials)
 result = get_json(data)
 print(result)
