@@ -29,10 +29,10 @@ owned_materials = {
     "부드러운 목재" : 2222,
     "아비도스 목재" : 1111
 }
-if not ac.can_craft(owned_materials,required_materials):
-    missing_materials = ac.get_missing_materials(owned_materials,required_materials)
-    result = ac.calculate_missing_cost(prices,missing_materials)
-    print(result)
+result  = ac.calculate_direct_purchase_plan(owned_materials, prices)
+import json
+print(json.dumps(result, ensure_ascii= False, indent=4))
+
     
     
 

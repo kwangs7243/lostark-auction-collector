@@ -30,6 +30,7 @@ def get_required_materials(craft_count: int = 40) -> dict:
         name: amount * craft_count 
         for name, amount in REQUIRED_PER_CRAFT.items()
     }
+
 def can_craft(owned_materials:dict, required_materials:dict) -> bool: # owned_materials: 보유재료 required_materials: 제작재료 
     '''
     제작필요갯수와 보유갯수를 비교하여 제작가능 여부를 반환
@@ -49,7 +50,6 @@ def get_missing_materials(owned_materials:dict, required_materials:dict) -> dict
         owned_amount = owned_materials.get(name, 0)
         if owned_amount < required_amount:
             result[name] = required_amount - owned_amount
-
     return result
 
 def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
@@ -65,5 +65,34 @@ def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
             "buy_amount" : buy_amount,
             "cost" : buy_amount * price // 100
         }
-
     return result
+
+def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_count: int = 40) -> dict:
+    """
+    직접 구매만 하여 제작 가능한 계획을 반환한다.
+    """
+    required_materials = get_required_materials(craft_count)
+    missing_materials = get_missing_materials(owned_materials, required_materials)
+    purchase_plan = calculate_missing_cost(prices, missing_materials)
+
+    total_cost = sum(item["cost"] for item in purchase_plan.values())
+
+    after_purchase_materials = owned_materials.copy()
+
+    for name, plan in purchase_plan.items():
+        after_purchase_materials[name] = (
+            after_purchase_materials.get(name, 0)
+            + plan["buy_amount"]
+        )
+
+    return {
+        "craft_count": craft_count,
+        "can_craft_before_purchase": can_craft(owned_materials, required_materials),
+        "required_materials": required_materials,
+        "missing_materials": missing_materials,
+        "purchase_plan": purchase_plan,
+        "after_purchase_materials": after_purchase_materials,
+        "can_craft_after_purchase": can_craft(after_purchase_materials, required_materials),
+        "total_cost": total_cost,
+    }
+
