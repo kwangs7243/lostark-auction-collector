@@ -124,7 +124,7 @@ def calculate_direct_purchase_plan(
     }
 
  
-def calculate_required_powder_for_abidos_wood(missing_materials: dict) -> dict:
+def calculate_required_abidos_powder(missing_materials: dict) -> dict:
     '''
     부족한 아비도스 목재를 가루 교환으로 채우기 위해
     필요한 가루 수량을 계산하여 반환
@@ -173,8 +173,38 @@ def calculate_exchange_only_plan(
     craft_count: int = 40
 ) -> dict:
     '''
-    단일재료로 교환을 통한 졔작 계획 반환 
+    단일 재료 교환을 통한 제작 계획 반환
     '''
+
+    required_materials = get_required_materials(craft_count)
+
+    missing_materials = get_missing_materials(
+        owned_materials,
+        required_materials
+    )
+
+    required_powder_info = calculate_required_abidos_powder(missing_materials)
+
+    exchange_plans = calculate_powder_exchange_plans(
+        owned_materials,
+        required_powder_info["필요한가루"]
+    )
+
+    possible_plans = {}
+
+    for material_name, plan in exchange_plans.items():
+        if plan["가능여부"]:
+            possible_plans[material_name] = plan
+
+    return {
+        "제작횟수": craft_count,
+        "플랜이름": "단일재료 교환 제작",
+        "필요재료": required_materials,
+        "부족한재료": missing_materials,
+        "필요가루정보": required_powder_info,
+        "교환계획": exchange_plans,
+        "가능한교환계획": possible_plans,
+    }
 
 
 
