@@ -25,16 +25,17 @@ owned_materials = {
     SOFT_WOOD : 2222,
     ABIDOS_WOOD : 1111
 }
+missing_materials = ac.get_missing_materials(owned_materials,required_materials)
+dic = ac.calculate_required_powder_for_abidos_wood(missing_materials)
+required_powder = dic["필요한가루"]
 remaining_materials = ac.calculate_remaining_materials(
     owned_materials,
     required_materials)
 import json
 def get_json(data):
     return(json.dumps(data, ensure_ascii=False, indent=4))
-missing_materials = ac.get_missing_materials(owned_materials,required_materials)
-dic = ac.calculate_required_powder_for_abidos_wood(missing_materials)
-required_powder = dic["필요한가루"]
-data =[dic, ac.calculate_powder_exchange_plan_by_material(owned_materials,required_powder,WOOD)]
+data =[ ac.calculate_powder_exchange_plan_by_material(owned_materials,required_powder)]
+
 result = get_json(data)
 print(result)
 
