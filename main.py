@@ -21,15 +21,17 @@ prices = ac.build_calculation_prices(lumber_prices)
 
 required_materials = ac.get_required_materials()
 owned_materials = {
-    WOOD : 3333,
+    WOOD : 13333,
     SOFT_WOOD : 2222,
     ABIDOS_WOOD : 1111
 }
-
+remaining_materials = ac.calculate_remaining_materials(
+    owned_materials,
+    required_materials)
 import json
 def get_json(data):
     return(json.dumps(data, ensure_ascii=False, indent=4))
-data = ac.calculate_exchangeable_powder(owned_materials)
+data = ac.calculate_exchangeable_powder(remaining_materials)
 result = get_json(data)
 print(result)
 

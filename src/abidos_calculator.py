@@ -1,5 +1,8 @@
 import math
-from src.constants import (REQUIRED_PER_CRAFT, EXCHANGE_RECIPES, POWDER, POWDER_TO_ABIDOS_RECIPE)
+from src.constants import (
+    REQUIRED_PER_CRAFT, EXCHANGE_RECIPES, 
+    POWDER, POWDER_TO_ABIDOS_RECIPE,
+    WOOD, SOFT_WOOD, ABIDOS_WOOD)
 
 
 
@@ -69,19 +72,26 @@ def calculate_missing_cost(prices:dict, missing_materials:dict) -> dict:
 
 def calculate_remaining_materials(materials: dict, required_materials: dict) -> dict:
     """
-    제작 후 남는 재료를 계산한다.
+    제작 후 남는 재료를 계산하여 반환
     """
     result = {}
 
     for name, owned_amount in materials.items():
         required_amount = required_materials.get(name, 0)
-        result[name] = owned_amount - required_amount
+        result[name] = (
+            owned_amount - required_amount 
+            if owned_amount - required_amount > 0 else 0
+            )
 
     return result
 
-def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_count: int = 40) -> dict:
+def calculate_direct_purchase_plan(
+        owned_materials: dict, 
+        prices: dict, 
+        craft_count: int = 40
+        ) -> dict:
     """
-    직접 구매만 하여 제작 가능한 계획을 반환한다.
+    직접 구매만 하여 제작 가능한 계획을 반환
     """
     required_materials = get_required_materials(craft_count)
     missing_materials = get_missing_materials(owned_materials, required_materials)
@@ -96,7 +106,9 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
             after_purchase_materials.get(name, 0)
             + plan["구매재료"]
         )
-    after_craft_materials = calculate_remaining_materials(after_purchase_materials, required_materials)
+    after_craft_materials = calculate_remaining_materials(
+        after_purchase_materials, 
+        required_materials)
 
     return {
         "제작횟수": craft_count,
@@ -109,5 +121,44 @@ def calculate_direct_purchase_plan(owned_materials: dict, prices: dict, craft_co
         "제작후 남은재료": after_craft_materials,
         "총구매비용": total_cost
     }
+
+ 
+def calculate_required_powder_for_abidos_wood(missing_materials: dict) -> dict:
+    '''
+    부족한 아비도스 목재를 가루 교환으로 채우기 위해
+    필요한 가루 수량을 계산하여 반환
+    '''
+    missing_abidos_wood = missing_materials[ABIDOS_WOOD]
+    adjusted_abidos_wood  = round_up_to_unit(
+        missing_abidos_wood,
+        POWDER_TO_ABIDOS_RECIPE["획득재료"]
+        )
+    exchange_count = adjusted_abidos_wood  //  POWDER_TO_ABIDOS_RECIPE["획득재료"]
+    required_powder = exchange_count * POWDER_TO_ABIDOS_RECIPE["필요재료"]
+
+    return {
+        "부족한 아비도스 목재" : missing_abidos_wood,
+        "보정된 아비도스 목재" : adjusted_abidos_wood ,
+        "교환횟수" : exchange_count,
+        "필요한 가루" : required_powder
+    }
+
+def calculate_powder_exchange_plan_by_material(
+    owned_materials: dict,
+    required_powder: int,
+    material_name: str
+) -> dict:
+    '''
+    보유재료 하나만 사용해서 필요한가루를 만들수있는지 계산하여 반환
+    '''
+    return {
+        "재료이름" : material_name,
+        "필요한가루" : required_powder,
+        "교환 횟수" : ...,
+        "사용재료" : ...,
+        "획득가루" : ...,
+        "가능여부" : ...
+    }
+
 
 
