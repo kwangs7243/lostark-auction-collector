@@ -111,7 +111,8 @@ def calculate_direct_purchase_plan(
         required_materials)
 
     return {
-        "제작횟수": craft_count,
+        "제작횟수" : craft_count,
+        "플랜이름" : "부족재료 모두구매 후 제작",
         "구매전 제작가능여부": can_craft(owned_materials, required_materials),
         "필요재료": required_materials,
         "부족한재료": missing_materials,
