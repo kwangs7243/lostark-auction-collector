@@ -140,7 +140,7 @@ def calculate_required_powder_for_abidos_wood(missing_materials: dict) -> dict:
         "부족한 아비도스 목재" : missing_abidos_wood,
         "보정된 아비도스 목재" : adjusted_abidos_wood ,
         "교환횟수" : exchange_count,
-        "필요한 가루" : required_powder
+        "필요한가루" : required_powder
     }
 
 def calculate_powder_exchange_plan_by_material(
@@ -151,14 +151,27 @@ def calculate_powder_exchange_plan_by_material(
     '''
     보유재료 하나만 사용해서 필요한가루를 만들수있는지 계산하여 반환
     '''
+    material_amount = owned_materials.get(material_name, 0)
+    recipe = EXCHANGE_RECIPES[material_name]
+    adjusted_powder = round_up_to_unit(required_powder, recipe["획득가루"])
+    exchange_count = adjusted_powder // recipe["획득가루"]
+    used_amount = exchange_count * recipe["필요재료"]
     return {
         "재료이름" : material_name,
         "필요한가루" : required_powder,
-        "교환 횟수" : ...,
-        "사용재료" : ...,
-        "획득가루" : ...,
-        "가능여부" : ...
+        "보정된가루" : adjusted_powder,
+        "교환횟수" : exchange_count,
+        "필요한재료수량" : used_amount,
+        "보유재료수량" : material_amount,
+        "가능여부" : material_amount >= used_amount
     }
+
+def calculate_powder_exchange_plans(
+        owned_materials: dict, 
+        required_powder: dict
+        ) -> dict:
+    '''
+    '''
 
 
 
