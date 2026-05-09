@@ -94,33 +94,48 @@ def calculate_direct_purchase_plan(
     직접 구매만 하여 제작 가능한 계획을 반환
     """
     required_materials = get_required_materials(craft_count)
+
+    if can_craft(owned_materials, required_materials):
+        after_craft_materials = calculate_remaining_materials(
+            owned_materials, 
+            required_materials
+            )
+        return {
+        "제작횟수" : craft_count,
+        "플랜이름" : "부족재료 모두구매 후 제작",
+        "구매전 제작가능여부": True,
+        "필요재료": required_materials,
+        "제작후 남은재료": after_craft_materials,
+        "총비용": 0
+    }
     missing_materials = get_missing_materials(owned_materials, required_materials)
     purchase_plan = calculate_missing_cost(prices, missing_materials)
 
     total_cost = sum(item["비용"] for item in purchase_plan.values())
 
-    after_purchase_materials = owned_materials.copy()
 
+    after_purchase_materials = owned_materials.copy()
     for name, plan in purchase_plan.items():
         after_purchase_materials[name] = (
             after_purchase_materials.get(name, 0)
             + plan["구매재료"]
         )
     after_craft_materials = calculate_remaining_materials(
-        after_purchase_materials, 
-        required_materials)
+        after_purchase_materials,
+        required_materials
+        )
 
     return {
         "제작횟수" : craft_count,
         "플랜이름" : "부족재료 모두구매 후 제작",
-        "구매전 제작가능여부": can_craft(owned_materials, required_materials),
+        "구매전 제작가능여부": False,
         "필요재료": required_materials,
         "부족한재료": missing_materials,
         "구매계획": purchase_plan,
         "구매후 재료": after_purchase_materials,
-        "구매후 제작가능여부": can_craft(after_purchase_materials, required_materials),
+        "구매후 제작가능여부": True,
         "제작후 남은재료": after_craft_materials,
-        "총구매비용": total_cost
+        "총비용": total_cost
     }
 
  
@@ -141,32 +156,69 @@ def calculate_required_abidos_powder(missing_materials: dict) -> dict:
         "부족한 아비도스 목재" : missing_abidos_wood,
         "보정된 아비도스 목재" : adjusted_abidos_wood ,
         "교환횟수" : exchange_count,
-        "필요한가루" : required_powder
+        "필요한가루" : required_powder,
+        "총비용" : 0
     }
 
 def calculate_powder_exchange_plans(
     owned_materials: dict,
-    required_powder: int,
+    required_powder_info: dict,
 ) -> dict:
     '''
     보유재료를 각각 단독으로 사용했을 때
     필요한 가루를 만들 수 있는지 계산하여 반환한다.
     '''
     result = {}
-    for material_name , recipe in EXCHANGE_RECIPES.items():
+
+    required_powder = required_powder_info["필요한가루"]
+    gained_abidos_wood = required_powder_info["보정된 아비도스 목재"]
+
+    for material_name, recipe in EXCHANGE_RECIPES.items():
         material_amount = owned_materials.get(material_name, 0)
-        adjusted_powder = round_up_to_unit(required_powder, recipe["획득가루"])
+        adjusted_powder = round_up_to_unit(
+            required_powder,
+            recipe["획득가루"]
+        )
         exchange_count = adjusted_powder // recipe["획득가루"]
         used_amount = exchange_count * recipe["필요재료"]
+
         result[material_name] = {
-            "필요한가루" : required_powder,
-            "보정된가루" : adjusted_powder,
-            "교환횟수" : exchange_count,
-            "필요한재료수량" : used_amount,
-            "보유재료수량" : material_amount,
-            "가능여부" : material_amount >= used_amount
-            }
+            "재료이름": material_name,
+            "필요한가루": required_powder,
+            "보정된가루": adjusted_powder,
+            "교환횟수": exchange_count,
+            "필요한재료수량": used_amount,
+            "보유재료수량": material_amount,
+            "획득아비도스목재": gained_abidos_wood,
+            "가능여부": material_amount >= used_amount,
+        }
+
     return result
+
+def apply_abidos_exchange(
+    owned_materials: dict,
+    exchange_plan: dict
+) -> dict:
+    '''
+    선택된 교환계획을 보유재료에 반영하여 반환
+    '''
+    after_exchange_materials = owned_materials.copy()
+
+    material_name = exchange_plan["재료이름"]
+    used_amount = exchange_plan["필요한재료수량"]
+    gained_abidos_wood = exchange_plan["획득아비도스목재"]
+
+    after_exchange_materials[material_name] = (
+        after_exchange_materials.get(material_name, 0)
+        - used_amount
+    )
+
+    after_exchange_materials[ABIDOS_WOOD] = (
+        after_exchange_materials.get(ABIDOS_WOOD, 0)
+        + gained_abidos_wood
+    )
+
+    return after_exchange_materials
 
 def calculate_exchange_only_plan(
     owned_materials: dict,
@@ -175,35 +227,78 @@ def calculate_exchange_only_plan(
     '''
     단일 재료 교환을 통한 제작 계획 반환
     '''
-
     required_materials = get_required_materials(craft_count)
+
+    if can_craft(owned_materials, required_materials):
+        after_craft_materials = calculate_remaining_materials(
+            owned_materials,
+            required_materials
+        )
+
+        return {
+            "제작횟수": craft_count,
+            "플랜이름": "단일재료 교환 제작",
+            "교환전 제작가능여부": True,
+            "필요재료": required_materials,
+            "제작후 남은재료": after_craft_materials,
+            "총비용": 0,
+        }
 
     missing_materials = get_missing_materials(
         owned_materials,
         required_materials
     )
 
-    required_powder_info = calculate_required_abidos_powder(missing_materials)
+    required_powder_info = calculate_required_abidos_powder(
+        missing_materials
+    )
 
     exchange_plans = calculate_powder_exchange_plans(
         owned_materials,
-        required_powder_info["필요한가루"]
+        required_powder_info
     )
 
-    possible_plans = {}
+    selected_exchange_plan = None
 
-    for material_name, plan in exchange_plans.items():
+    for plan in exchange_plans.values():
         if plan["가능여부"]:
-            possible_plans[material_name] = plan
+            selected_exchange_plan = plan
+            break
+
+    after_exchange_materials = owned_materials.copy()
+
+    if selected_exchange_plan is not None:
+        after_exchange_materials = apply_abidos_exchange(
+            owned_materials,
+            selected_exchange_plan
+        )
+
+    can_craft_after_exchange = can_craft(
+        after_exchange_materials,
+        required_materials
+    )
+
+    after_craft_materials = None
+
+    if can_craft_after_exchange:
+        after_craft_materials = calculate_remaining_materials(
+            after_exchange_materials,
+            required_materials
+        )
 
     return {
         "제작횟수": craft_count,
         "플랜이름": "단일재료 교환 제작",
+        "교환전 제작가능여부": False,
         "필요재료": required_materials,
         "부족한재료": missing_materials,
         "필요가루정보": required_powder_info,
         "교환계획": exchange_plans,
-        "가능한교환계획": possible_plans,
+        "선택된교환계획": selected_exchange_plan,
+        "교환후 재료": after_exchange_materials,
+        "교환후 제작가능여부": can_craft_after_exchange,
+        "제작후 남은재료": after_craft_materials,
+        "총비용": 0 if can_craft_after_exchange else None,
     }
 
 
