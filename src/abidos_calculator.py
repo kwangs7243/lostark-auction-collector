@@ -144,7 +144,7 @@ def calculate_required_abidos_powder(missing_materials: dict) -> dict:
     부족한 아비도스 목재를 가루 교환으로 채우기 위해
     필요한 가루 수량을 계산하여 반환
     '''
-    missing_abidos_wood = missing_materials[ABIDOS_WOOD]
+    missing_abidos_wood = missing_materials.get(ABIDOS_WOOD, 0)
     adjusted_abidos_wood  = round_up_to_unit(
         missing_abidos_wood,
         POWDER_TO_ABIDOS_RECIPE["획득재료"]
@@ -157,7 +157,6 @@ def calculate_required_abidos_powder(missing_materials: dict) -> dict:
         "보정된 아비도스 목재" : adjusted_abidos_wood ,
         "교환횟수" : exchange_count,
         "필요한가루" : required_powder,
-        "총비용" : 0
     }
 
 def calculate_powder_exchange_plans(
@@ -190,7 +189,11 @@ def calculate_powder_exchange_plans(
             "필요한재료수량": used_amount,
             "보유재료수량": material_amount,
             "획득아비도스목재": gained_abidos_wood,
-            "가능여부": material_amount >= used_amount,
+            "가능여부": (
+                False
+                if required_powder == 0 
+                else material_amount >= used_amount
+                )
         }
 
     return result
@@ -300,6 +303,8 @@ def calculate_exchange_only_plan(
         "제작후 남은재료": after_craft_materials,
         "총비용": 0 if can_craft_after_exchange else None,
     }
+
+
 
 
 
