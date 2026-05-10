@@ -372,10 +372,20 @@ def calculate_exchange_then_purchase_plan(
         exchangeable_materials,
         required_powder_info 
     )
-    for material_name, exchange_plan in powder_exchange_plans.items():
-        if exchange_plan["획득아비도스목재"] > 0 :
-            if not exchange_plan["가능여부"]:
-                pass
+    selected_exchange_plan = None
+
+    for exchange_plan in powder_exchange_plans.values():
+        if exchange_plan["획득아비도스목재"] > 0:
+            selected_exchange_plan = exchange_plan
+            break
+
+    if selected_exchange_plan is not None:
+        after_exchange_materials = apply_abidos_exchange(
+            owned_materials,
+            selected_exchange_plan
+        )
+    else:
+        after_exchange_materials = owned_materials.copy()
 
             
 
