@@ -303,7 +303,10 @@ def calculate_exchange_only_plan(
             selected_exchange_plan = plan
             break
 
-    after_exchange_materials = owned_materials.copy()
+    after_exchange_materials = None 
+    can_craft_after_exchange = False
+    after_craft_materials = None
+    after_craft_missing_materials = None
 
     if selected_exchange_plan is not None:
         after_exchange_materials = apply_abidos_exchange(
@@ -311,24 +314,22 @@ def calculate_exchange_only_plan(
             selected_exchange_plan
         )
 
-    can_craft_after_exchange = can_craft(
-        after_exchange_materials,
-        required_materials
-    )
-
-    after_craft_materials = None
-    after_craft_missing_materials = None
-    if can_craft_after_exchange:
-        after_craft_materials = calculate_remaining_materials(
+    if after_exchange_materials is not None:
+        can_craft_after_exchange = can_craft(
             after_exchange_materials,
             required_materials
         )
-    else:
-        after_craft_missing_materials = get_missing_materials(
-            after_exchange_materials,
-            required_materials
-            )
 
+        if can_craft_after_exchange:
+            after_craft_materials = calculate_remaining_materials(
+                after_exchange_materials,
+                required_materials
+            )
+        else:
+            after_craft_missing_materials = get_missing_materials(
+                after_exchange_materials,
+                required_materials
+            )
 
     return {
         "제작횟수": craft_count,
@@ -363,10 +364,21 @@ def calculate_exchange_then_purchase_plan(
     required_powder_info = calculate_required_abidos_powder(
         missing_materials
     )
-    powder_exchange_plans = calculate_powder_exchange_plans(
+    exchangeable_materials = calculate_exchangeable_materials(
         owned_materials,
+        required_materials
+    )
+    powder_exchange_plans = calculate_powder_exchange_plans(
+        exchangeable_materials,
         required_powder_info 
     )
+    for material_name, exchange_plan in powder_exchange_plans.items():
+        if exchange_plan["획득아비도스목재"] > 0 :
+            if not exchange_plan["가능여부"]:
+                pass
+
+            
+
 
 
 

@@ -34,9 +34,9 @@ def print_json(data: dict) -> None:
 craft_count = 40
 
 owned_materials = {
-    WOOD: 15000,
+    WOOD: 11000,
     SOFT_WOOD: 1146,
-    ABIDOS_WOOD: 700,
+    ABIDOS_WOOD: 13,
 }
 
 lumber_prices = get_lumber_prices()
@@ -59,5 +59,4 @@ powder_exchange_plans = ac.calculate_powder_exchange_plans(
 abidos_exchange = ac.apply_abidos_exchange(owned_materials, powder_exchange_plans[WOOD])
 exchange_only_plan = ac.calculate_exchange_only_plan(owned_materials)
 
-print_json(abidos_exchange)
-print_json(powder_exchange_plans)
+print_json(exchange_only_plan)
