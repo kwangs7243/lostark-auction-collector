@@ -1,7 +1,8 @@
 import math
 
 from src.constants import REQUIRED_PER_CRAFT
-
+# 교환 가격 책임없는
+# 순수 재료 계산 
 
 def round_up_to_unit(amount: int, unit: int = 100) -> int:
     """

@@ -14,6 +14,8 @@ from src.material_utils import (
 )
 from src.price_utils import calculate_missing_cost
 
+# 여러계산들을 수집하여 제작가능한 플랜을 선별
+
 
 def calculate_direct_purchase_plan(
         owned_materials: dict, 

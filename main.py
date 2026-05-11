@@ -42,6 +42,7 @@ def main() -> None:
     lumber_prices = get_lumber_prices()
     prices = ac.build_calculation_prices(lumber_prices)
     priority_order = ac.get_priority_order(lumber_prices)
+
     direct_purchase_plan = ac.calculate_direct_purchase_plan(
         owned_materials=owned_materials,
         prices=prices,
@@ -68,15 +69,18 @@ def main() -> None:
 
     best_plan = ac.select_best_plan(candidate_plans)
 
-    print("=== 전체 후보 플랜 ===")
+    print("=== 가격 우선순위 ===")
+    print_json(priority_order)
+
+    print("\n=== 전체 후보 플랜 ===")
     print_json(candidate_plans)
 
     print("\n=== 최종 추천 플랜 ===")
     print_json(best_plan)
 
+
 if __name__ == "__main__":
     main()
-
 
 
     

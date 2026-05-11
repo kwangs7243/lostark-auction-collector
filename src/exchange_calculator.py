@@ -7,7 +7,8 @@ from src.constants import (
 )
 from src.material_utils import round_up_to_unit
 
-
+# 교환에 필요한 계산
+# constants 교환레시피를 알고 이를 책임하여 교환시스템구현
 def get_used_materials_from_exchange_plan(exchange_plan: dict) -> dict:
     '''
     교환에 들어가는 재료의 갯수를 반환

@@ -1,7 +1,8 @@
 from src.constants import EXCHANGE_RECIPES
 from src.material_utils import round_up_to_unit
 
-
+# 제작 책임없는
+# 순수 가격계산
 def build_calculation_prices(raw_prices:dict) ->dict:
     '''
     계산에 사용할 가격정보를 가공한다
