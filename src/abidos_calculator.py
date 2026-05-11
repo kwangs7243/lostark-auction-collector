@@ -357,6 +357,22 @@ def calculate_exchange_then_purchase_plan(
     단일재료 교환 후 부족분을 구매하는 계획 반환
     '''
     required_materials = get_required_materials(craft_count)
+
+    if can_craft(owned_materials, required_materials):
+        after_craft_materials = calculate_remaining_materials(
+            owned_materials,
+            required_materials
+        )
+
+        return {
+            "제작횟수": craft_count,
+            "플랜이름": "단일재료 교환 제작",
+            "교환전 제작가능여부": True,
+            "필요재료": required_materials,
+            "제작후 남은재료": after_craft_materials,
+            "총비용": 0,
+        }
+
     missing_materials = get_missing_materials(
         owned_materials,
         required_materials
@@ -387,9 +403,30 @@ def calculate_exchange_then_purchase_plan(
     else:
         after_exchange_materials = owned_materials.copy()
 
-            
+    after_exchange_missing = get_missing_materials(after_exchange_materials,required_materials)
+    purchase_plan = calculate_missing_cost(prices, after_exchange_missing)
+    after_purchase_materials = after_exchange_materials.copy()
+    total_cost = sum(item["비용"] for item in purchase_plan.values())
+    for name, plan in purchase_plan.items():
+        after_purchase_materials[name] = (
+            after_purchase_materials.get(name, 0)
+            + plan["구매재료"]
+        )
+    after_craft_materials = calculate_remaining_materials(after_purchase_materials,required_materials)
 
-
+    return {
+        "제작횟수":craft_count,
+        "플랜이름":"단일재료교환 후 부족분 구매",
+        "구매전 제작가능여부" : False,
+        "필요재료" : required_materials,
+        "교환계획" : selected_exchange_plan,
+        "교환후부족재료" : after_exchange_missing,
+        "구매계획" : purchase_plan,
+        "구매후재료" : after_purchase_materials,
+        "구매후 제작가능여부": True,
+        "제작후 남은재료": after_craft_materials,
+        "총비용": total_cost
+    }
 
 
 

@@ -53,11 +53,19 @@ def main() -> None:
         craft_count=craft_count
     )
 
+    exchange_then_purchase_plan = ac.calculate_exchange_then_purchase_plan(
+        owned_materials=owned_materials,
+        prices=prices,
+        craft_count=craft_count
+    )
     print("=== 직접 구매 플랜 ===")
     print_json(direct_purchase_plan)
 
     print("\n=== 보유재료 교환 플랜 ===")
     print_json(exchange_only_plan)
+
+    print("\n=== 보유재료 교환 후 구매 플랜 ===")
+    print_json(exchange_then_purchase_plan)
 
 
 if __name__ == "__main__":
