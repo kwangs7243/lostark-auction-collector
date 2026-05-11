@@ -41,7 +41,7 @@ def main() -> None:
 
     lumber_prices = get_lumber_prices()
     prices = ac.build_calculation_prices(lumber_prices)
-
+    priority_order = ac.get_priority_order(lumber_prices)
     direct_purchase_plan = ac.calculate_direct_purchase_plan(
         owned_materials=owned_materials,
         prices=prices,

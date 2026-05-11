@@ -1,5 +1,4 @@
 import json
-
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
 import src.abidos_calculator as ac
@@ -53,4 +52,4 @@ required_powder_info = ac.calculate_required_abidos_powder(
         missing_materials
     )
 
-print_json(required_powder_info)
+print_json(lumber_prices)
