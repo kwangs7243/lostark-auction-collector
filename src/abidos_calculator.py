@@ -111,6 +111,7 @@ def get_used_materials_from_exchange_plan(exchange_plan: dict) -> dict:
     return {
         material_name: used_amount
     }
+
 def calculate_exchangeable_materials(
     owned_materials: dict,
     required_materials: dict
@@ -198,6 +199,85 @@ def calculate_powder_exchange_plans(
         }
 
     return result
+
+def calculate_mixed_powder_exchange_plan(
+    exchangeable_materials: dict,
+    required_powder: int,
+    priority_order: list[str]
+) -> dict:
+    '''
+    여러 재료를 우선순위에 따라 섞어서 가루 교환 계획을 만든다.
+    '''
+    exchange_details = []
+    used_materials = {}
+
+    for material_name in priority_order:
+        if required_powder <= 0:
+            break
+
+        recipe = EXCHANGE_RECIPES[material_name]
+        material_amount = exchangeable_materials.get(material_name, 0)
+
+        possible_exchange_count = (
+            material_amount // recipe["필요재료"]
+        )
+
+        adjusted_powder = round_up_to_unit(
+            required_powder,
+            recipe["획득가루"]
+        )
+
+        required_exchange_count = (
+            adjusted_powder // recipe["획득가루"]
+        )
+
+        exchange_count = min(
+            possible_exchange_count,
+            required_exchange_count
+        )
+
+        if exchange_count <= 0:
+            continue
+
+        used_amount = exchange_count * recipe["필요재료"]
+        gained_powder = exchange_count * recipe["획득가루"]
+
+        required_powder = max(
+            required_powder - gained_powder,
+            0
+        )
+
+        used_materials[material_name] = (
+            used_materials.get(material_name, 0)
+            + used_amount
+        )
+
+        exchange_details.append({
+            "재료이름": material_name,
+            "교환횟수": exchange_count,
+            "사용재료수량": used_amount,
+            "획득가루": gained_powder,
+            "교환후남은필요가루": required_powder,
+        })
+
+    gained_powder = required_powder - required_powder
+
+    gained_abidos_wood = (
+        gained_powder
+        // POWDER_TO_ABIDOS_RECIPE["필요재료"]
+        * POWDER_TO_ABIDOS_RECIPE["획득재료"]
+    )
+
+    return {
+        "우선순위": priority_order,
+        "필요가루": required_powder,
+        "획득가루": gained_powder,
+        "남은필요가루": required_powder,
+        "획득아비도스목재": gained_abidos_wood,
+        "사용재료": used_materials,
+        "교환상세": exchange_details,
+        "가능여부": required_powder <= 0,
+    }
 
 def apply_abidos_exchange(
     owned_materials: dict,
@@ -440,6 +520,8 @@ def calculate_exchange_then_purchase_candidates(
                     "구매후재료": owned_materials.copy(),
                     "제작가능여부": True,
                     "제작후 남은재료": after_craft_materials,
+                    "사용재료": {},
+                    "사용재료가치":0,
                     "총비용": 0,
                 }
             ],
@@ -540,6 +622,7 @@ def calculate_exchange_then_purchase_candidates(
         "교환계획들": powder_exchange_plans,
         "후보플랜들": candidate_plans,
     }
+
 
 def select_best_plan(candidate_plans: list[dict]) -> dict:
     '''

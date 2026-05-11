@@ -52,11 +52,5 @@ exchangeable_materials = ac.calculate_exchangeable_materials(owned_materials,req
 required_powder_info = ac.calculate_required_abidos_powder(
         missing_materials
     )
-powder_exchange_plans = ac.calculate_powder_exchange_plans(
-        exchangeable_materials,
-        required_powder_info 
-    )
-abidos_exchange = ac.apply_abidos_exchange(owned_materials, powder_exchange_plans[WOOD])
-exchange_only_plan = ac.calculate_exchange_only_plan(owned_materials)
 
-print_json(exchange_only_plan)
+print_json(required_powder_info)
