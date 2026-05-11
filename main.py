@@ -35,8 +35,8 @@ def main() -> None:
 
     owned_materials = {
         WOOD: 31812,
-        SOFT_WOOD: 1146,
-        ABIDOS_WOOD: 13,
+        SOFT_WOOD: 16000,
+        ABIDOS_WOOD: 1012,
     }
 
     lumber_prices = get_lumber_prices()
@@ -48,25 +48,31 @@ def main() -> None:
         craft_count=craft_count
     )
 
-    exchange_only_plan = ac.calculate_exchange_only_plan(
-        owned_materials=owned_materials,
-        craft_count=craft_count
-    )
-
-    exchange_then_purchase_plan = ac.calculate_exchange_then_purchase_plan(
+    exchange_only_result = ac.calculate_exchange_only_candidates(
         owned_materials=owned_materials,
         prices=prices,
         craft_count=craft_count
     )
-    print("=== 직접 구매 플랜 ===")
-    print_json(direct_purchase_plan)
 
-    print("\n=== 보유재료 교환 플랜 ===")
-    print_json(exchange_only_plan)
+    exchange_then_purchase_result = ac.calculate_exchange_then_purchase_candidates(
+        owned_materials=owned_materials,
+        prices=prices,
+        craft_count=craft_count
+    )
 
-    print("\n=== 보유재료 교환 후 구매 플랜 ===")
-    print_json(exchange_then_purchase_plan)
+    candidate_plans = []
 
+    candidate_plans.append(direct_purchase_plan)
+    candidate_plans.extend(exchange_only_result["후보플랜들"])
+    candidate_plans.extend(exchange_then_purchase_result["후보플랜들"])
+
+    best_plan = ac.select_best_plan(candidate_plans)
+
+    print("=== 전체 후보 플랜 ===")
+    print_json(candidate_plans)
+
+    print("\n=== 최종 추천 플랜 ===")
+    print_json(best_plan)
 
 if __name__ == "__main__":
     main()
