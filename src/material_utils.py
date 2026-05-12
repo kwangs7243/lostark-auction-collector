@@ -68,7 +68,7 @@ def calculate_material_value(materials: dict, prices: dict) -> int:
     total = 0
 
     for name, amount in materials.items():
-        price = prices.get(name, 0)
+        price = prices[name]
         total += amount * price // 100
 
     return total
