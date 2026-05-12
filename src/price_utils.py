@@ -40,10 +40,7 @@ def calculate_powder_unit_cost(
     '''
     recipe = EXCHANGE_RECIPES[material_name]
 
-    bundle_price = max(
-        lumber_prices[material_name]["최저가"],
-        lumber_prices[material_name]["최근가"]
-    )
+    bundle_price = lumber_prices[material_name]
 
     return (
         bundle_price
@@ -53,7 +50,7 @@ def calculate_powder_unit_cost(
     )
 
 
-def get_priority_order(lumber_prices: dict) -> list[str]:
+def get_priority_order(prices: dict) -> list[str]:
     '''
     가루 1개당 비용이 낮은 재료 순서로 정렬한다.
     '''
@@ -61,6 +58,6 @@ def get_priority_order(lumber_prices: dict) -> list[str]:
         EXCHANGE_RECIPES,
         key=lambda material_name: calculate_powder_unit_cost(
             material_name,
-            lumber_prices
+            prices
         )
     )

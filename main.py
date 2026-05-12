@@ -26,7 +26,7 @@ def get_abidos_price() -> dict:
     return extract_price_data(result)
 
 
-def print_json(data: dict) -> None:
+def print_json(data) -> None:
     print(json.dumps(data, ensure_ascii=False, indent=4))
 
 
@@ -41,7 +41,6 @@ def main() -> None:
 
     lumber_prices = get_lumber_prices()
     prices = ac.build_calculation_prices(lumber_prices)
-    priority_order = ac.get_priority_order(lumber_prices)
 
     direct_purchase_plan = ac.calculate_direct_purchase_plan(
         owned_materials=owned_materials,
@@ -49,28 +48,26 @@ def main() -> None:
         craft_count=craft_count
     )
 
-    exchange_only_result = ac.calculate_exchange_only_candidates(
+    mixed_exchange_only_plan = ac.calculate_mixed_exchange_only_plan(
         owned_materials=owned_materials,
         prices=prices,
         craft_count=craft_count
     )
 
-    exchange_then_purchase_result = ac.calculate_exchange_then_purchase_candidates(
+    mixed_exchange_then_purchase_plan = ac.calculate_mixed_exchange_then_purchase_plan(
         owned_materials=owned_materials,
         prices=prices,
         craft_count=craft_count
     )
 
-    candidate_plans = []
-
-    candidate_plans.append(direct_purchase_plan)
-    candidate_plans.extend(exchange_only_result["후보플랜들"])
-    candidate_plans.extend(exchange_then_purchase_result["후보플랜들"])
+    candidate_plans = [
+        direct_purchase_plan,
+        mixed_exchange_only_plan,
+        mixed_exchange_then_purchase_plan,
+    ]
 
     best_plan = ac.select_best_plan(candidate_plans)
 
-    print("=== 가격 우선순위 ===")
-    print_json(priority_order)
 
     print("\n=== 전체 후보 플랜 ===")
     print_json(candidate_plans)
@@ -81,8 +78,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
     
     
 
