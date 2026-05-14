@@ -3,16 +3,16 @@ from src.constants import (
     WOOD,
     SOFT_WOOD,
     ABIDOS_WOOD,
-    POWDER_TO_ABIDOS_RECIPE
+    POWDER_TO_ABIDOS_RECIPE,
 )
-from src.material_utils import round_up_to_unit
 
 
-# 제작 책임없는
-# 순수 가격계산
+# 제작 책임 없는 순수 가격 계산 / 가격 판단
+
 def build_calculation_prices(raw_prices: dict) -> dict:
     '''
     계산에 사용할 가격정보를 가공한다.
+    최저가와 최근가 중 더 보수적인 가격을 사용한다.
     '''
     prices = {}
 
@@ -48,28 +48,6 @@ def validate_required_prices(prices: dict) -> None:
         )
 
 
-def calculate_missing_cost(
-    prices: dict,
-    missing_materials: dict
-) -> dict:
-    '''
-    제작에 부족한 재료의 구매 가격을 계산하여 반환한다.
-    '''
-    result = {}
-
-    for name, missing_amount in missing_materials.items():
-        price = prices[name]
-        buy_amount = round_up_to_unit(missing_amount, 100)
-
-        result[name] = {
-            "부족한재료": missing_amount,
-            "구매재료": buy_amount,
-            "비용": buy_amount * price // 100
-        }
-
-    return result
-
-
 def calculate_powder_unit_cost(
     material_name: str,
     prices: dict
@@ -101,10 +79,11 @@ def get_priority_order(prices: dict) -> list[str]:
         )
     )
 
+
 def compare_abidos_purchase_vs_exchange(prices: dict) -> dict:
     '''
-    아비도스 목재를 직접 구매할지
-    재료목재를 구매해서 교환하여 얻을지 계산하여 반환
+    아비도스 목재를 직접 구매할지,
+    재료 목재를 구매해서 교환으로 얻을지 비교하여 반환한다.
     '''
     priority_order = get_priority_order(prices)
     cheapest_material = priority_order[0]

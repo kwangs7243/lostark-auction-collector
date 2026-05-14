@@ -7,8 +7,9 @@ from src.constants import (
 )
 from src.material_utils import round_up_to_unit
 
+
 # 교환에 필요한 계산
-# constants 교환레시피를 알고 이를 책임하여 교환시스템구현
+# constants 교환레시피를 알고 이를 책임하여 교환 시스템 구현
 
 
 def calculate_exchangeable_materials(
@@ -16,8 +17,7 @@ def calculate_exchangeable_materials(
     required_materials: dict
 ) -> dict:
     '''
-    제작에 필요한 갯수를 제외한 목재와 부드러운 목재의
-    수량을 반환
+    제작에 필요한 갯수를 제외한 목재와 부드러운 목재의 수량을 반환한다.
     '''
     result = {}
 
@@ -32,24 +32,25 @@ def calculate_exchangeable_materials(
 def calculate_required_abidos_powder(missing_materials: dict) -> dict:
     '''
     부족한 아비도스 목재를 가루 교환으로 채우기 위해
-    필요한 가루 수량을 계산하여 반환
+    필요한 가루 수량을 계산하여 반환한다.
     '''
     missing_abidos_wood = missing_materials.get(ABIDOS_WOOD, 0)
-    adjusted_abidos_wood  = round_up_to_unit(
+    adjusted_abidos_wood = round_up_to_unit(
         missing_abidos_wood,
         POWDER_TO_ABIDOS_RECIPE["획득재료"]
-        )
-    required_count = adjusted_abidos_wood  //  POWDER_TO_ABIDOS_RECIPE["획득재료"]
+    )
+    required_count = (
+        adjusted_abidos_wood
+        // POWDER_TO_ABIDOS_RECIPE["획득재료"]
+    )
     required_powder = required_count * POWDER_TO_ABIDOS_RECIPE["필요재료"]
 
     return {
-        "부족한 아비도스 목재" : missing_abidos_wood,
-        "보정된 아비도스 목재" : adjusted_abidos_wood ,
-        "교환필요횟수" : required_count,
-        "필요한가루" : required_powder,
+        "부족한 아비도스 목재": missing_abidos_wood,
+        "보정된 아비도스 목재": adjusted_abidos_wood,
+        "교환필요횟수": required_count,
+        "필요한가루": required_powder,
     }
-
-
 
 
 def calculate_mixed_powder_exchange_plan(
@@ -127,23 +128,23 @@ def calculate_mixed_powder_exchange_plan(
     )
 
     abidos_wood_exchange_count = (
-        gained_abidos_wood 
+        gained_abidos_wood
         // POWDER_TO_ABIDOS_RECIPE["획득재료"]
-        )
-
+    )
 
     return {
         "우선순위": priority_order,
         "필요가루": original_required_powder,
         "획득가루": total_gained_powder,
         "남은필요가루": remaining_required_powder,
-        "아비도스목재교환횟수" : abidos_wood_exchange_count,
+        "아비도스목재교환횟수": abidos_wood_exchange_count,
         "필요아비도스목재": required_abidos_wood,
         "획득아비도스목재": gained_abidos_wood,
         "사용재료": used_materials,
         "교환상세": exchange_details,
         "가능여부": remaining_required_powder <= 0,
     }
+
 
 def apply_abidos_exchange(
     owned_materials: dict,
@@ -166,13 +167,3 @@ def apply_abidos_exchange(
     )
 
     return after_exchange_materials
-
-def build_smart_purchase_plan(
-    prices: dict,
-    missing_materials: dict
-) -> dict:
-    '''
-    아비도스 목재를 직접 구매할지 여부를 받아서
-    그에 맞는 구매계획을 반환
-    '''
-    pass
