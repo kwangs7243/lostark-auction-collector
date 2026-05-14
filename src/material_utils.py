@@ -61,6 +61,8 @@ def calculate_remaining_materials(
     return result
 
 
+
+
 def calculate_material_value(materials: dict, prices: dict) -> int:
     '''
     재료들의 가격을 계산하여 반환

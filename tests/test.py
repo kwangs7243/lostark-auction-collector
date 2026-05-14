@@ -51,5 +51,6 @@ exchangeable_materials = ac.calculate_exchangeable_materials(owned_materials,req
 required_powder_info = ac.calculate_required_abidos_powder(
         missing_materials
     )
+plan = ac.compare_abidos_purchase_vs_exchange(prices)
 
-print_json(lumber_prices)
+print_json(plan)
