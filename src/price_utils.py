@@ -3,6 +3,7 @@ from src.constants import (
     WOOD,
     SOFT_WOOD,
     ABIDOS_WOOD,
+    POWDER_TO_ABIDOS_RECIPE
 )
 from src.material_utils import round_up_to_unit
 
@@ -99,3 +100,36 @@ def get_priority_order(prices: dict) -> list[str]:
             prices
         )
     )
+
+def compare_abidos_purchase_vs_exchange(prices: dict) -> dict:
+    '''
+    아비도스 목재를 직접 구매할지
+    재료목재를 구매해서 교환하여 얻을지 계산하여 반환
+    '''
+    priority_order = get_priority_order(prices)
+    cheapest_material = priority_order[0]
+
+    powder_unit_cost = calculate_powder_unit_cost(
+        cheapest_material,
+        prices
+    )
+
+    powder_cost_per_abidos = (
+        powder_unit_cost
+        * POWDER_TO_ABIDOS_RECIPE["필요재료"]
+        / POWDER_TO_ABIDOS_RECIPE["획득재료"]
+    )
+
+    direct_abidos_price = prices[ABIDOS_WOOD] / 100
+
+    should_buy_directly = direct_abidos_price <= powder_cost_per_abidos
+
+    return {
+        "직접구매추천": should_buy_directly,
+        "추천방식": "직접구매" if should_buy_directly else "교환",
+        "직접구매단가": direct_abidos_price,
+        "교환환산단가": powder_cost_per_abidos,
+        "가루최저재료": cheapest_material,
+        "가루1개비용": powder_unit_cost,
+        "우선순위": priority_order,
+    }

@@ -166,3 +166,12 @@ def apply_abidos_exchange(
     )
 
     return after_exchange_materials
+
+def missing_materials_cost(missing_meterials:dict, price:dict) -> dict:
+    '''
+    제작에 부족한 재료를 구매하는 최적 플랜을 계산하여 반환
+    '''
+    # 재료들의 가치를 비교할수있는 기준필요 (목재와 부드러운목재비교기능은 구현되어있음) 
+    # 아비도스목재를 그냥 사는 경우가 저렴한지 확인이필요
+    # 부족한재료를 그냥 다살지 가장 가루당비용이 적은 재료로살지 판단해야함
+    # 
