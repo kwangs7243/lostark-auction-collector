@@ -107,7 +107,6 @@ def calculate_mixed_powder_exchange_plan(
 
         total_gained_powder += gained_powder
         used_materials[material_name] = used_amount
-
         exchange_details.append({
             "재료이름": material_name,
             "교환횟수": exchange_count,
@@ -127,11 +126,18 @@ def calculate_mixed_powder_exchange_plan(
         required_abidos_wood
     )
 
+    abidos_wood_exchange_count = (
+        gained_abidos_wood 
+        // POWDER_TO_ABIDOS_RECIPE["획득재료"]
+        )
+
+
     return {
         "우선순위": priority_order,
         "필요가루": original_required_powder,
         "획득가루": total_gained_powder,
         "남은필요가루": remaining_required_powder,
+        "아비도스목재교환횟수" : abidos_wood_exchange_count,
         "필요아비도스목재": required_abidos_wood,
         "획득아비도스목재": gained_abidos_wood,
         "사용재료": used_materials,

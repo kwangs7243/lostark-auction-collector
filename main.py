@@ -34,9 +34,9 @@ def main() -> None:
     craft_count = 40
 
     owned_materials = {
-        WOOD: 31812,
-        SOFT_WOOD: 16000,
-        ABIDOS_WOOD: 1012,
+        WOOD: 20969,
+        SOFT_WOOD: 2420,
+        ABIDOS_WOOD: 590,
     }
 
     lumber_prices = get_lumber_prices()
