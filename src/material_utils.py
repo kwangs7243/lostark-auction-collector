@@ -1,57 +1,45 @@
 import math
 
-from src.constants import REQUIRED_PER_CRAFT
-# 교환 가격 책임없는
-# 순수 재료 계산 
+from src.constants import PURCHASE_UNIT, REQUIRED_PER_CRAFT
 
-def round_up_to_unit(amount: int, unit: int = 100) -> int:
-    """
-    수량을 unit 단위로 올림한다.
-    예: 1 -> 100, 101 -> 200
-    """
+
+def round_up_to_unit(amount: int | float, unit: int = PURCHASE_UNIT) -> int:
+    """수량을 지정한 거래 단위로 올림 처리한다."""
+    if amount <= 0:
+        return 0
     return math.ceil(amount / unit) * unit
 
 
 def get_required_materials(craft_count: int = 40) -> dict:
-    '''
-    제작에 필요한 재료의 총 갯수를 계산하여 반환
-    '''
+    """제작 횟수에 필요한 전체 재료 수량을 계산한다."""
     return {
-        name: amount * craft_count 
+        name: amount * craft_count
         for name, amount in REQUIRED_PER_CRAFT.items()
     }
 
 
-def can_craft(owned_materials:dict, required_materials:dict) -> bool: 
-    '''
-    제작필요갯수와 보유갯수를 비교하여 제작가능 여부를 반환
-    '''
-    for name, required_amount in required_materials.items():
-        owned_amount = owned_materials.get(name, 0)
-        if owned_amount < required_amount:
-            return False
-    return True
+def can_craft(owned_materials: dict, required_materials: dict) -> bool:
+    """보유 재료만으로 필요한 재료를 모두 충족하는지 확인한다."""
+    return all(
+        owned_materials.get(name, 0) >= required_amount
+        for name, required_amount in required_materials.items()
+    )
 
 
-def get_missing_materials(owned_materials:dict, required_materials:dict) -> dict:
-    '''
-    제작에 부족한 재료와 재료의 갯수를 반환
-    '''
-    result = {}
-    for name, required_amount in required_materials.items():
-        owned_amount = owned_materials.get(name, 0)
-        if owned_amount < required_amount:
-            result[name] = required_amount - owned_amount
-    return result
+def get_missing_materials(owned_materials: dict, required_materials: dict) -> dict:
+    """제작에 부족한 재료와 부족 수량만 골라 반환한다."""
+    return {
+        name: required_amount - owned_materials.get(name, 0)
+        for name, required_amount in required_materials.items()
+        if owned_materials.get(name, 0) < required_amount
+    }
 
 
 def calculate_remaining_materials(
-        owned_materials: dict, 
-        required_materials: dict
-        ) -> dict:
-    """
-    제작 후 남는 재료를 계산하여 반환
-    """
+    owned_materials: dict,
+    required_materials: dict,
+) -> dict:
+    """필요 재료를 사용한 뒤 남는 보유 재료 수량을 계산한다."""
     result = {}
 
     for name, owned_amount in owned_materials.items():
@@ -61,16 +49,13 @@ def calculate_remaining_materials(
     return result
 
 
-
-
 def calculate_material_value(materials: dict, prices: dict) -> int:
-    '''
-    재료들의 가격을 계산하여 반환
-    '''
+    """재료 수량을 현재 계산 가격 기준의 골드 가치로 환산한다."""
     total = 0
 
     for name, amount in materials.items():
-        price = prices[name]
-        total += amount * price // 100
+        if amount <= 0:
+            continue
+        total += amount * prices[name] // PURCHASE_UNIT
 
     return total

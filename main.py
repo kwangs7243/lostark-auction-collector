@@ -1,36 +1,56 @@
 import json
 
-from src.lostark_api import search_market_item
-from src.price_parser import extract_price_data
 import src.abidos_calculator as ac
 from src.constants import (
-    CATEGORY_CODES,
-    WOOD,
-    SOFT_WOOD,
     ABIDOS_WOOD,
+    CATEGORY_CODES,
+    SOFT_WOOD,
+    WOOD,
 )
+from src.lostark_api import search_market_item
+from src.price_parser import extract_price_data
 
 
 def get_lumber_prices() -> dict:
+    """거래소 API에서 벌목 전리품 가격 정보를 가져온다."""
     result = search_market_item(
-        category_code=CATEGORY_CODES["벌목전리품"]
+        category_code=CATEGORY_CODES["벌목전리품"],
     )
     return extract_price_data(result)
 
 
 def get_abidos_price() -> dict:
+    """거래소 API에서 아비도스 목재 가격 정보를 가져온다."""
     result = search_market_item(
-        item_name="상급 아비도스",
-        category_code=CATEGORY_CODES["재련재료"]
+        item_name="아비도스 목재",
+        category_code=CATEGORY_CODES["재련재료"],
     )
     return extract_price_data(result)
 
 
+def get_market_prices() -> dict:
+    """계산에 필요한 시장 가격 정보를 하나의 dict로 합친다."""
+    prices = {}
+    prices.update(get_lumber_prices())
+    prices.update(get_abidos_price())
+    return prices
+
+
 def print_json(data) -> None:
+    """dict 또는 list 데이터를 한글이 깨지지 않는 JSON 형태로 출력한다."""
     print(json.dumps(data, ensure_ascii=False, indent=4))
 
 
+def print_plan_summary(plan: dict) -> None:
+    """후보 플랜의 핵심 비교 정보만 간단히 출력한다."""
+    print(f"- {plan['플랜이름']}")
+    print(f"  제작가능: {plan['제작가능여부']}")
+    print(f"  구매비용: {plan['구매비용']}")
+    print(f"  사용재료가치: {plan['사용재료가치']}")
+
+
 def main() -> None:
+    """보유 재료와 제작 횟수를 기준으로 후보 플랜을 만들고 최적 플랜을 출력한다."""
     craft_count = 40
 
     owned_materials = {
@@ -39,38 +59,18 @@ def main() -> None:
         ABIDOS_WOOD: 100,
     }
 
-    lumber_prices = get_lumber_prices()
-    prices = ac.build_calculation_prices(lumber_prices)
-
-    direct_purchase_plan = ac.calculate_direct_purchase_plan(
+    raw_prices = get_market_prices()
+    prices = ac.build_calculation_prices(raw_prices)
+    candidate_plans = ac.generate_candidate_plans(
         owned_materials=owned_materials,
         prices=prices,
-        craft_count=craft_count
+        craft_count=craft_count,
     )
-
-    mixed_exchange_only_plan = ac.calculate_mixed_exchange_only_plan(
-        owned_materials=owned_materials,
-        prices=prices,
-        craft_count=craft_count
-    )
-
-    mixed_exchange_then_purchase_plan = ac.calculate_mixed_exchange_then_purchase_plan(
-        owned_materials=owned_materials,
-        prices=prices,
-        craft_count=craft_count
-    )
-
-    candidate_plans = [
-        direct_purchase_plan,
-        mixed_exchange_only_plan,
-        mixed_exchange_then_purchase_plan,
-    ]
-
     best_plan = ac.select_best_plan(candidate_plans)
 
-
-    print("\n=== 전체 후보 플랜 ===")
-    print_json(candidate_plans)
+    print("\n=== 후보 플랜 요약 ===")
+    for plan in candidate_plans:
+        print_plan_summary(plan)
 
     print("\n=== 최종 추천 플랜 ===")
     print_json(best_plan)
@@ -78,7 +78,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    
-    
-
-

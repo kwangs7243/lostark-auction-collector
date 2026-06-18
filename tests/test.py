@@ -1,56 +1,81 @@
-import json
-from src.lostark_api import search_market_item
-from src.price_parser import extract_price_data
+import unittest
+
 import src.abidos_calculator as ac
-from src.constants import (
-    CATEGORY_CODES,
-    WOOD,
-    SOFT_WOOD,
-    ABIDOS_WOOD,
-)
+from src.constants import ABIDOS_WOOD, SOFT_WOOD, WOOD
 
 
-def get_lumber_prices() -> dict:
-    result = search_market_item(
-        category_code=CATEGORY_CODES["벌목전리품"]
-    )
-    return extract_price_data(result)
+class PlanGenerationTest(unittest.TestCase):
+    def test_exchange_then_purchase_can_reduce_purchase_cost(self):
+        prices = {
+            WOOD: 100,
+            SOFT_WOOD: 300,
+            ABIDOS_WOOD: 1000,
+        }
+        owned_materials = {
+            WOOD: 11000,
+            SOFT_WOOD: 1146,
+            ABIDOS_WOOD: 13,
+        }
+
+        direct_plan = ac.calculate_direct_purchase_plan(
+            owned_materials,
+            prices,
+            craft_count=40,
+        )
+        mixed_plan = ac.calculate_mixed_exchange_then_purchase_plan(
+            owned_materials,
+            prices,
+            craft_count=40,
+        )
+
+        self.assertTrue(direct_plan["제작가능여부"])
+        self.assertTrue(mixed_plan["제작가능여부"])
+        self.assertLess(mixed_plan["구매비용"], direct_plan["구매비용"])
+        self.assertGreater(mixed_plan["사용재료가치"], 0)
+
+    def test_best_plan_prioritizes_purchase_cost_before_owned_material_value(self):
+        candidate_plans = [
+            {
+                "플랜이름": "구매 없음, 재료 사용",
+                "제작가능여부": True,
+                "구매비용": 0,
+                "사용재료가치": 10000,
+            },
+            {
+                "플랜이름": "구매 있음, 재료 보존",
+                "제작가능여부": True,
+                "구매비용": 3000,
+                "사용재료가치": 0,
+            },
+        ]
+
+        best_plan = ac.select_best_plan(candidate_plans)
+
+        self.assertEqual(best_plan["플랜이름"], "구매 없음, 재료 사용")
+
+    def test_generate_candidate_plans_returns_valid_best_plan(self):
+        prices = {
+            WOOD: 100,
+            SOFT_WOOD: 300,
+            ABIDOS_WOOD: 1000,
+        }
+        owned_materials = {
+            WOOD: 15555,
+            SOFT_WOOD: 1500,
+            ABIDOS_WOOD: 100,
+        }
+
+        plans = ac.generate_candidate_plans(
+            owned_materials,
+            prices,
+            craft_count=40,
+        )
+        best_plan = ac.select_best_plan(plans)
+
+        self.assertGreaterEqual(len(plans), 4)
+        self.assertTrue(best_plan["제작가능여부"])
+        self.assertIn("구매비용", best_plan)
 
 
-def get_abidos_price() -> dict:
-    result = search_market_item(
-        item_name="상급 아비도스",
-        category_code=CATEGORY_CODES["재련재료"]
-    )
-    return extract_price_data(result)
-
-
-def print_json(data: dict) -> None:
-    print(json.dumps(data, ensure_ascii=False, indent=4))
-
-
-
-craft_count = 40
-
-owned_materials = {
-    WOOD: 11000,
-    SOFT_WOOD: 1146,
-    ABIDOS_WOOD: 13,
-}
-
-lumber_prices = get_lumber_prices()
-prices = ac.build_calculation_prices(lumber_prices)
-
-required_materials = ac.get_required_materials(craft_count)
-missing_materials = ac.get_missing_materials(
-        owned_materials,
-        required_materials
-    )
-remaining_materials = ac.calculate_remaining_materials(owned_materials,required_materials)
-exchangeable_materials = ac.calculate_exchangeable_materials(owned_materials,required_materials)
-required_powder_info = ac.calculate_required_abidos_powder(
-        missing_materials
-    )
-plan = ac.compare_abidos_purchase_vs_exchange(prices)
-
-print_json(plan)
+if __name__ == "__main__":
+    unittest.main()

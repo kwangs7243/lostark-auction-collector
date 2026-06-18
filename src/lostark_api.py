@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
 import os
+
 import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -10,8 +11,9 @@ url = "https://developer-lostark.game.onstove.com/markets/items"
 headers = {
     "Authorization": f"bearer {api_key}",
     "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Accept": "application/json",
 }
+
 
 def search_market_item(
     item_name: str = "",
@@ -21,9 +23,7 @@ def search_market_item(
     item_grade: str = "",
     page_no: int = 1,
 ) -> dict:
-    '''
-    로스트아크 거래소 오픈 API에 요청을 보낸 결과를 반환한다.
-    '''
+    """로스트아크 거래소 검색 API를 호출하고 응답 JSON을 반환한다."""
     if not api_key:
         raise ValueError("로스트아크 API 키가 없습니다.")
 
@@ -41,9 +41,8 @@ def search_market_item(
     response = requests.post(
         url,
         headers=headers,
-        json=body
+        json=body,
     )
-
     response.raise_for_status()
 
     return response.json()
