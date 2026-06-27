@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로스트아크 계신기 계산기</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% macro render_value(value) %}
+        {% if value is mapping %}
+            {% if value %}
+                <dl class="data-list">
+                    {% for key, child in value.items() %}
+                        <div>
+                            <dt>{{ key }}</dt>
+                            <dd>{{ render_value(child) }}</dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+            {% else %}
+                <span class="muted">없음</span>
+            {% endif %}
+        {% elif value is sequence and value is not string %}
+            {% if value %}
+                <ol class="compact-list">
+                    {% for child in value %}
+                        <li>{{ render_value(child) }}</li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <span class="muted">없음</span>
+            {% endif %}
+        {% elif value is sameas true %}
+            <span class="badge success">가능</span>
+        {% elif value is sameas false %}
+            <span class="badge danger">불가</span>
+        {% elif value is none %}
+            <span class="muted">없음</span>
+        {% else %}
+            {{ value }}
+        {% endif %}
+    {% endmacro %}
+
+    <header class="topbar">
+        <div>
+            <h1>로스트아크 계신기 계산기</h1>
+            <p>보유 재료와 제작 레시피 기준으로 구매/교환 후보를 비교합니다.</p>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="panel input-panel">
+            <h2>계산 조건</h2>
+            <form method="post" class="form-grid">
+                <label>
+                    <span>레시피</span>
+                    <select name="recipe_key">
+                        {% for key, label in recipe_labels.items() %}
+                            <option value="{{ key }}" {% if form_data.recipe_key == key %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label>
+                    <span>제작 횟수</span>
+                    <input type="number" name="craft_count" min="0" step="1" value="{{ form_data.craft_count }}">
+                </label>
+
+                <label>
+                    <span>보유 목재</span>
+                    <input type="number" name="wood" min="0" step="1" value="{{ form_data.wood }}">
+                </label>
+
+                <label>
+                    <span>보유 부드러운 목재</span>
+                    <input type="number" name="soft_wood" min="0" step="1" value="{{ form_data.soft_wood }}">
+                </label>
+
+                <label>
+                    <span>보유 아비도스 목재</span>
+                    <input type="number" name="abidos_wood" min="0" step="1" value="{{ form_data.abidos_wood }}">
+                </label>
+
+                <button type="submit">계산 실행</button>
+            </form>
+        </section>
+
+        {% if error %}
+            <section class="alert">{{ error }}</section>
+        {% endif %}
+
+        {% if result %}
+            <section class="summary-grid">
+                <article class="metric">
+                    <span>선택 레시피</span>
+                    <strong>{{ result.recipe_label }}</strong>
+                </article>
+                <article class="metric">
+                    <span>제작 횟수</span>
+                    <strong>{{ form_data.craft_count }}</strong>
+                </article>
+                <article class="metric">
+                    <span>최종 추천</span>
+                    <strong>{{ result.best_plan.플랜이름 }}</strong>
+                </article>
+            </section>
+
+            <section class="panel">
+                <div class="section-heading">
+                    <h2>후보 플랜</h2>
+                </div>
+                <div class="plan-grid">
+                    {% for plan in result.candidate_plans %}
+                        <article class="plan-card {% if plan.플랜이름 == result.best_plan.플랜이름 %}selected{% endif %}">
+                            <div class="plan-title">
+                                <h3>{{ plan.플랜이름 }}</h3>
+                                {{ render_value(plan.제작가능여부) }}
+                            </div>
+                            <div class="plan-stats">
+                                <div>
+                                    <span>구매 비용</span>
+                                    <strong>{{ plan.구매비용 }}</strong>
+                                </div>
+                                <div>
+                                    <span>사용 재료 가치</span>
+                                    <strong>{{ plan.사용재료가치 }}</strong>
+                                </div>
+                            </div>
+                            <details>
+                                <summary>상세 보기</summary>
+                                <div class="detail-grid">
+                                    <section>
+                                        <h4>필요 재료</h4>
+                                        {{ render_value(plan.필요재료) }}
+                                    </section>
+                                    <section>
+                                        <h4>부족한 재료</h4>
+                                        {{ render_value(plan.부족한재료) }}
+                                    </section>
+                                    <section>
+                                        <h4>구매 계획</h4>
+                                        {{ render_value(plan.구매계획) }}
+                                    </section>
+                                    <section>
+                                        <h4>교환 계획</h4>
+                                        {{ render_value(plan.교환계획) }}
+                                    </section>
+                                    <section>
+                                        <h4>제작 후 남은 재료</h4>
+                                        {{ render_value(plan.제작후남은재료) }}
+                                    </section>
+                                </div>
+                            </details>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="panel best-panel">
+                <div class="section-heading">
+                    <h2>최종 추천 플랜</h2>
+                    <span class="badge success">{{ result.best_plan.플랜이름 }}</span>
+                </div>
+                <div class="detail-grid">
+                    <section>
+                        <h4>구매 계획</h4>
+                        {{ render_value(result.best_plan.구매계획) }}
+                    </section>
+                    <section>
+                        <h4>교환 계획</h4>
+                        {{ render_value(result.best_plan.교환계획) }}
+                    </section>
+                    <section>
+                        <h4>제작 후 남은 재료</h4>
+                        {{ render_value(result.best_plan.제작후남은재료) }}
+                    </section>
+                    <section>
+                        <h4>현재 계산 가격</h4>
+                        {{ render_value(result.prices) }}
+                    </section>
+                </div>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>
