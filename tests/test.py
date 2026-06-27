@@ -1,7 +1,7 @@
 import unittest
 
 import src.abidos_calculator as ac
-from src.constants import ABIDOS_WOOD, SOFT_WOOD, WOOD
+from src.constants import ABIDOS_WOOD, RECIPES, SOFT_WOOD, WOOD
 
 
 class PlanGenerationTest(unittest.TestCase):
@@ -75,6 +75,38 @@ class PlanGenerationTest(unittest.TestCase):
         self.assertGreaterEqual(len(plans), 4)
         self.assertTrue(best_plan["제작가능여부"])
         self.assertIn("구매비용", best_plan)
+
+    def test_generate_candidate_plans_uses_selected_recipe(self):
+        prices = {
+            WOOD: 100,
+            SOFT_WOOD: 300,
+            ABIDOS_WOOD: 1000,
+        }
+        owned_materials = {
+            WOOD: 0,
+            SOFT_WOOD: 0,
+            ABIDOS_WOOD: 0,
+        }
+
+        abidos_plans = ac.generate_candidate_plans(
+            owned_materials,
+            prices,
+            craft_count=1,
+            recipe=RECIPES["abidos"],
+        )
+        advanced_plans = ac.generate_candidate_plans(
+            owned_materials,
+            prices,
+            craft_count=1,
+            recipe=RECIPES["advanced_abidos"],
+        )
+
+        self.assertEqual(abidos_plans[0]["필요재료"][WOOD], 86)
+        self.assertEqual(abidos_plans[0]["필요재료"][SOFT_WOOD], 45)
+        self.assertEqual(abidos_plans[0]["필요재료"][ABIDOS_WOOD], 33)
+        self.assertEqual(advanced_plans[0]["필요재료"][WOOD], 112)
+        self.assertEqual(advanced_plans[0]["필요재료"][SOFT_WOOD], 59)
+        self.assertEqual(advanced_plans[0]["필요재료"][ABIDOS_WOOD], 43)
 
 
 if __name__ == "__main__":

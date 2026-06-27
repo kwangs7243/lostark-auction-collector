@@ -4,6 +4,8 @@ import src.abidos_calculator as ac
 from src.constants import (
     ABIDOS_WOOD,
     CATEGORY_CODES,
+    DEFAULT_RECIPE_KEY,
+    RECIPES,
     SOFT_WOOD,
     WOOD,
 )
@@ -19,21 +21,9 @@ def get_lumber_prices() -> dict:
     return extract_price_data(result)
 
 
-def get_abidos_price() -> dict:
-    """거래소 API에서 아비도스 목재 가격 정보를 가져온다."""
-    result = search_market_item(
-        item_name="아비도스 목재",
-        category_code=CATEGORY_CODES["재련재료"],
-    )
-    return extract_price_data(result)
-
-
 def get_market_prices() -> dict:
     """계산에 필요한 시장 가격 정보를 하나의 dict로 합친다."""
-    prices = {}
-    prices.update(get_lumber_prices())
-    prices.update(get_abidos_price())
-    return prices
+    return get_lumber_prices()
 
 
 def print_json(data) -> None:
@@ -54,17 +44,19 @@ def main() -> None:
     craft_count = 40
 
     owned_materials = {
-        WOOD: 15555,
-        SOFT_WOOD: 1500,
-        ABIDOS_WOOD: 100,
+        WOOD: 27551,
+        SOFT_WOOD: 3818,
+        ABIDOS_WOOD: 1045,
     }
 
     raw_prices = get_market_prices()
     prices = ac.build_calculation_prices(raw_prices)
+    recipe = RECIPES[DEFAULT_RECIPE_KEY]
     candidate_plans = ac.generate_candidate_plans(
         owned_materials=owned_materials,
         prices=prices,
         craft_count=craft_count,
+        recipe=recipe,
     )
     best_plan = ac.select_best_plan(candidate_plans)
 

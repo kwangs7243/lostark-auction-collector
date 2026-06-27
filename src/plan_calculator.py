@@ -4,7 +4,7 @@ from src.exchange_calculator import (
     calculate_mixed_powder_exchange_plan,
     calculate_required_abidos_powder,
 )
-from src.constants import ABIDOS_WOOD
+from src.constants import ABIDOS_WOOD, DEFAULT_RECIPE_KEY, RECIPES
 from src.material_utils import (
     calculate_material_value,
     calculate_remaining_materials,
@@ -101,9 +101,11 @@ def calculate_direct_purchase_plan(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> dict:
     """부족한 재료를 모두 직접 구매하는 기본 플랜을 만든다."""
-    required_materials = get_required_materials(craft_count)
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
+    required_materials = get_required_materials(craft_count, recipe)
 
     if can_craft(owned_materials, required_materials):
         return _build_owned_only_result(
@@ -146,9 +148,11 @@ def calculate_smart_purchase_plan(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> dict:
     """부족 재료 중 아비도스 목재는 가장 싼 충당 방식을 골라 구매 플랜을 만든다."""
-    required_materials = get_required_materials(craft_count)
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
+    required_materials = get_required_materials(craft_count, recipe)
 
     if can_craft(owned_materials, required_materials):
         return _build_owned_only_result(
@@ -188,9 +192,11 @@ def calculate_mixed_exchange_only_plan(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> dict:
     """보유 잉여 재료만 교환해서 제작 가능한지 확인하는 플랜을 만든다."""
-    required_materials = get_required_materials(craft_count)
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
+    required_materials = get_required_materials(craft_count, recipe)
 
     if can_craft(owned_materials, required_materials):
         return _build_owned_only_result(
@@ -243,9 +249,11 @@ def calculate_mixed_exchange_then_purchase_plan(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> dict:
     """보유 잉여 재료를 먼저 교환하고 남은 부족분을 구매하는 플랜을 만든다."""
-    required_materials = get_required_materials(craft_count)
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
+    required_materials = get_required_materials(craft_count, recipe)
 
     if can_craft(owned_materials, required_materials):
         return _build_owned_only_result(
@@ -310,9 +318,11 @@ def calculate_abidos_purchase_candidate_plans(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> list[dict]:
     """아비도스 목재 부족분을 채우는 구매 후보들을 각각 제작 플랜으로 만든다."""
-    required_materials = get_required_materials(craft_count)
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
+    required_materials = get_required_materials(craft_count, recipe)
     missing_materials = get_missing_materials(
         owned_materials,
         required_materials,
@@ -379,19 +389,27 @@ def generate_candidate_plans(
     owned_materials: dict,
     prices: dict,
     craft_count: int = 40,
+    recipe: dict | None = None,
 ) -> list[dict]:
     """현재 보유 재료와 가격으로 비교할 전체 후보 플랜 목록을 생성한다."""
+    recipe = recipe or RECIPES[DEFAULT_RECIPE_KEY]
     plans = [
-        calculate_direct_purchase_plan(owned_materials, prices, craft_count),
-        calculate_smart_purchase_plan(owned_materials, prices, craft_count),
-        calculate_mixed_exchange_only_plan(owned_materials, prices, craft_count),
-        calculate_mixed_exchange_then_purchase_plan(owned_materials, prices, craft_count),
+        calculate_direct_purchase_plan(owned_materials, prices, craft_count, recipe),
+        calculate_smart_purchase_plan(owned_materials, prices, craft_count, recipe),
+        calculate_mixed_exchange_only_plan(owned_materials, prices, craft_count, recipe),
+        calculate_mixed_exchange_then_purchase_plan(
+            owned_materials,
+            prices,
+            craft_count,
+            recipe,
+        ),
     ]
     plans.extend(
         calculate_abidos_purchase_candidate_plans(
             owned_materials,
             prices,
             craft_count,
+            recipe,
         )
     )
 

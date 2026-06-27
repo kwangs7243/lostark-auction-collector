@@ -5,11 +5,28 @@ POWDER = "생활의 가루"
 
 PURCHASE_UNIT = 100
 
-REQUIRED_PER_CRAFT = {
+ABIDOS_PER_CRAFT = {
+    WOOD: 86,
+    SOFT_WOOD: 45,
+    ABIDOS_WOOD: 33,
+}
+ADVANCED_ABIDOS_PER_CRAFT = {
     WOOD: 112,
     SOFT_WOOD: 59,
     ABIDOS_WOOD: 43,
 }
+
+RECIPES = {
+    "abidos": ABIDOS_PER_CRAFT,
+    "advanced_abidos": ADVANCED_ABIDOS_PER_CRAFT,
+}
+
+RECIPE_LABELS = {
+    "abidos": "아비도스",
+    "advanced_abidos": "상급 아비도스",
+}
+
+DEFAULT_RECIPE_KEY = "advanced_abidos"
 
 EXCHANGE_RECIPES = {
     WOOD: {

@@ -1,6 +1,6 @@
 import math
 
-from src.constants import PURCHASE_UNIT, REQUIRED_PER_CRAFT
+from src.constants import PURCHASE_UNIT
 
 
 def round_up_to_unit(amount: int | float, unit: int = PURCHASE_UNIT) -> int:
@@ -10,11 +10,11 @@ def round_up_to_unit(amount: int | float, unit: int = PURCHASE_UNIT) -> int:
     return math.ceil(amount / unit) * unit
 
 
-def get_required_materials(craft_count: int = 40) -> dict:
+def get_required_materials(craft_count: int, recipe: dict) -> dict:
     """제작 횟수에 필요한 전체 재료 수량을 계산한다."""
     return {
         name: amount * craft_count
-        for name, amount in REQUIRED_PER_CRAFT.items()
+        for name, amount in recipe.items()
     }
 
 
