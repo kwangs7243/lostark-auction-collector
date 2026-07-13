@@ -3,184 +3,431 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>로스트아크 계신기 계산기</title>
+    <title>로스트아크 융화 재료 계산기</title>
+    <script>
+        try {
+            const savedTheme = localStorage.getItem("lostark-calculator-theme");
+            if (savedTheme === "light" || savedTheme === "dark") {
+                document.documentElement.dataset.theme = savedTheme;
+            }
+        } catch (error) {
+            // 저장소를 사용할 수 없으면 운영체제 테마를 그대로 사용한다.
+        }
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='theme.js') }}"></script>
 </head>
 <body>
-    {% macro render_value(value) %}
-        {% if value is mapping %}
-            {% if value %}
-                <dl class="data-list">
-                    {% for key, child in value.items() %}
-                        <div>
-                            <dt>{{ key }}</dt>
-                            <dd>{{ render_value(child) }}</dd>
-                        </div>
-                    {% endfor %}
-                </dl>
-            {% else %}
-                <span class="muted">없음</span>
-            {% endif %}
-        {% elif value is sequence and value is not string %}
-            {% if value %}
-                <ol class="compact-list">
-                    {% for child in value %}
-                        <li>{{ render_value(child) }}</li>
-                    {% endfor %}
-                </ol>
-            {% else %}
-                <span class="muted">없음</span>
-            {% endif %}
-        {% elif value is sameas true %}
-            <span class="badge success">가능</span>
-        {% elif value is sameas false %}
-            <span class="badge danger">불가</span>
-        {% elif value is none %}
-            <span class="muted">없음</span>
+    {% macro material_chips(materials) %}
+        {% if materials %}
+            <div class="chips">
+                {% for name, amount in materials.items() %}
+                    <span class="chip"><b>{{ name }}</b>{{ "{:,}".format(amount) }}</span>
+                {% endfor %}
+            </div>
         {% else %}
-            {{ value }}
+            <span class="empty">없음</span>
         {% endif %}
     {% endmacro %}
 
-    <header class="topbar">
-        <div>
-            <h1>로스트아크 계신기 계산기</h1>
-            <p>보유 재료와 제작 레시피 기준으로 구매/교환 후보를 비교합니다.</p>
+    {% macro purchase_list(items) %}
+        {% if items %}
+            <div class="compact-list">
+                {% for item in items %}
+                    <div class="compact-row">
+                        <div>
+                            <span class="row-label">{{ item.label }}</span>
+                            <strong>{{ item.material }}</strong>
+                        </div>
+                        <div class="row-value">
+                            <strong>{{ "{:,}".format(item.buy_amount) }}개</strong>
+                            <span>{{ "{:,}".format(item.cost) }}골드</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">추가 구매 없이 보유 재료를 사용합니다.</p>
+        {% endif %}
+    {% endmacro %}
+
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand-block">
+                <span class="eyebrow">LOST ARK · CRAFT PLANNER</span>
+                <h1>융화 재료 제작 계산기</h1>
+                <p>보유 재료와 실시간 거래소 가격으로 가장 적게 지출하는 방법을 찾습니다.</p>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="테마 전환">
+                <span class="theme-icon" aria-hidden="true">◐</span>
+                <span class="theme-label">테마</span>
+            </button>
         </div>
     </header>
 
     <main class="layout">
-        <section class="panel input-panel">
-            <h2>계산 조건</h2>
-            <form method="post" class="form-grid">
-                <label>
-                    <span>레시피</span>
-                    <select name="recipe_key">
-                        {% for key, label in recipe_labels.items() %}
-                            <option value="{{ key }}" {% if form_data.recipe_key == key %}selected{% endif %}>
-                                {{ label }}
-                            </option>
+        <form method="post" class="calculator-form">
+            <div class="calculator-top-grid">
+                <section class="input-card conditions-card">
+                    <div class="card-heading">
+                        <div>
+                            <span class="section-kicker">CALCULATOR</span>
+                            <h2>계산 조건</h2>
+                        </div>
+                        <p>제작할 제품과 현재 보유 중인 재료를 입력하세요.</p>
+                    </div>
+
+                    <div class="conditions-grid">
+                        <label class="field product-field">
+                            <span>제작 제품</span>
+                            <select name="recipe_key">
+                                {% for key, label in recipe_labels.items() %}
+                                    <option value="{{ key }}" {% if form_data.recipe_key == key %}selected{% endif %}>
+                                        {{ label }} 융화 재료
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>제작 횟수</span>
+                            <input type="number" name="craft_count" min="0" step="1" value="{{ form_data.craft_count }}">
+                        </label>
+
+                        <label class="field">
+                            <span>보유 목재</span>
+                            <input type="number" name="wood" min="0" step="1" value="{{ form_data.wood }}">
+                        </label>
+
+                        <label class="field">
+                            <span>보유 부드러운 목재</span>
+                            <input type="number" name="soft_wood" min="0" step="1" value="{{ form_data.soft_wood }}">
+                        </label>
+
+                        <label class="field">
+                            <span>보유 아비도스 목재</span>
+                            <input type="number" name="abidos_wood" min="0" step="1" value="{{ form_data.abidos_wood }}">
+                        </label>
+
+                        <button class="calculate-button" type="submit" name="action" value="calculate">
+                            <span>입력 가격으로 계산</span>
+                            <span aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                </section>
+
+                <aside class="input-card market-price-card">
+                    <div class="market-price-heading">
+                        <div>
+                            <span class="section-kicker">MARKET INPUT</span>
+                            <h2>거래소 기준 가격</h2>
+                        </div>
+                        {% if price_fetched_at %}<small>{{ price_fetched_at }} 조회</small>{% endif %}
+                    </div>
+                    <p class="market-price-guide">API 현재 최저가를 불러왔습니다. 실제 매물 상황에 맞게 적용 가격을 수정할 수 있습니다.</p>
+                    <input type="hidden" name="price_fetched_at" value="{{ price_fetched_at }}">
+
+                    <div class="market-price-list">
+                        {% for item in price_rows %}
+                            <label class="market-price-row {% if item.is_modified %}modified{% endif %}">
+                                <span class="market-item-name">
+                                    <b>{{ item.item_name }}</b>
+                                    <small>{{ item.unit_label }} · API {{ item.api_price if item.api_price != '' else '-' }}골드</small>
+                                </span>
+                                {% if item.is_modified %}<span class="manual-badge">직접 수정</span>{% endif %}
+                                <span class="market-price-input">
+                                    <input type="number" name="{{ item.field_name }}" min="1" step="1" value="{{ item.applied_price }}" required>
+                                    <em>골드</em>
+                                </span>
+                                <input type="hidden" name="{{ item.api_field_name }}" value="{{ item.api_price }}">
+                            </label>
                         {% endfor %}
-                    </select>
-                </label>
+                    </div>
 
-                <label>
-                    <span>제작 횟수</span>
-                    <input type="number" name="craft_count" min="0" step="1" value="{{ form_data.craft_count }}">
-                </label>
-
-                <label>
-                    <span>보유 목재</span>
-                    <input type="number" name="wood" min="0" step="1" value="{{ form_data.wood }}">
-                </label>
-
-                <label>
-                    <span>보유 부드러운 목재</span>
-                    <input type="number" name="soft_wood" min="0" step="1" value="{{ form_data.soft_wood }}">
-                </label>
-
-                <label>
-                    <span>보유 아비도스 목재</span>
-                    <input type="number" name="abidos_wood" min="0" step="1" value="{{ form_data.abidos_wood }}">
-                </label>
-
-                <button type="submit">계산 실행</button>
-            </form>
-        </section>
+                    <button class="refresh-price-button" type="submit" name="action" value="refresh_prices">
+                        <span>API 최저가로 새로고침</span>
+                        <span aria-hidden="true">↻</span>
+                    </button>
+                </aside>
+            </div>
+        </form>
 
         {% if error %}
-            <section class="alert">{{ error }}</section>
+            <section class="alert">
+                <strong>계산하지 못했습니다.</strong>
+                <span>{{ error }}</span>
+            </section>
         {% endif %}
 
-        {% if result %}
-            <section class="summary-grid">
-                <article class="metric">
-                    <span>선택 레시피</span>
+        {% if result and result.best_summary %}
+            <section class="decision-hero tone-{{ result.craft_vs_market.recommendation_tone }}">
+                <div class="decision-copy">
+                    <div class="decision-meta">
+                        <span class="decision-pill">최종 확보 방법</span>
+                        <span class="comparison-label">직접 제작 vs 완제품 구매</span>
+                        <span class="price-time">가격 조회 {{ result.price_fetched_at }}</span>
+                    </div>
+                    <h2>{{ result.craft_vs_market.recommendation_title }}</h2>
+                    <p>{{ result.craft_vs_market.recommendation_description }}</p>
+                    <div class="decision-product">
+                        <strong>{{ result.product.item_name }}</strong>
+                        <span>{{ "{:,}".format(result.product.total_output) }}개 확보 기준</span>
+                    </div>
+                </div>
+
+                <div class="cost-comparison">
+                    <article class="cost-card craft-cost {% if result.craft_vs_market.recommended_method == '직접 제작' %}recommended{% endif %}">
+                        <div class="cost-card-head">
+                            <span class="cost-icon">제작</span>
+                            {% if result.craft_vs_market.recommended_method == '직접 제작' %}<b>추천</b>{% endif %}
+                        </div>
+                        <span class="cost-label">직접 제작</span>
+                        <strong class="cost-value">{{ "{:,}".format(result.craft_vs_market.craft_total_outlay) }}<small>골드</small></strong>
+                        {% if result.craft_vs_market.craft_unit_cost is not none %}
+                            <span class="unit-cost">개당 {{ "{:,.2f}".format(result.craft_vs_market.craft_unit_cost) }}골드</span>
+                        {% endif %}
+                    </article>
+
+                    <div class="versus">VS</div>
+
+                    <article class="cost-card market-cost {% if result.craft_vs_market.recommended_method == '완제품 구매' %}recommended{% endif %}">
+                        <div class="cost-card-head">
+                            <span class="cost-icon">구매</span>
+                            {% if result.craft_vs_market.recommended_method == '완제품 구매' %}<b>추천</b>{% endif %}
+                        </div>
+                        <span class="cost-label">완제품 구매</span>
+                        <strong class="cost-value">{{ "{:,}".format(result.craft_vs_market.market_purchase_cost) }}<small>골드</small></strong>
+                        <span class="unit-cost">개당 {{ "{:,}".format(result.craft_vs_market.market_unit_price) }}골드</span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="summary-strip">
+                <article>
+                    <span>제작 제품</span>
                     <strong>{{ result.recipe_label }}</strong>
                 </article>
-                <article class="metric">
+                <article>
                     <span>제작 횟수</span>
-                    <strong>{{ form_data.craft_count }}</strong>
+                    <strong>{{ "{:,}".format(result.product.craft_count) }}회</strong>
                 </article>
-                <article class="metric">
-                    <span>최종 추천</span>
-                    <strong>{{ result.best_plan.플랜이름 }}</strong>
+                <article>
+                    <span>총 생산량</span>
+                    <strong>{{ "{:,}".format(result.product.total_output) }}개</strong>
+                </article>
+                <article>
+                    <span>재료 조달비</span>
+                    <strong>{{ "{:,}".format(result.craft_vs_market.material_procurement_cost) }}골드</strong>
+                </article>
+                <article>
+                    <span>총 제작비</span>
+                    <strong>{{ "{:,}".format(result.craft_vs_market.total_craft_cost) }}골드</strong>
                 </article>
             </section>
 
-            <section class="panel">
+            <section class="section-card workflow-card">
                 <div class="section-heading">
-                    <h2>후보 플랜</h2>
+                    <div>
+                        <span class="section-kicker">RECOMMENDED ROUTE</span>
+                        <h2>추천 제작 플랜 · 이렇게 준비하세요</h2>
+                        <p>{{ result.best_summary.name }}</p>
+                    </div>
+                    <span class="status-badge craft">제작 가능</span>
                 </div>
+
+                <div class="workflow-grid">
+                    <article class="workflow-step">
+                        <div class="step-head"><span class="step-number">01</span><h3>구매</h3></div>
+                        {{ purchase_list(result.best_summary.purchase_items) }}
+                    </article>
+
+                    <article class="workflow-step">
+                        <div class="step-head"><span class="step-number exchange">02</span><h3>교환</h3></div>
+                        {% if result.wood_procurement.selected_method == "튼튼한 목재 구매 후 교환" %}
+                            {% for row in result.wood_procurement.rows %}
+                                {% if row.is_selected %}
+                                    <div class="step-highlight wood-exchange-highlight">
+                                        <strong>튼튼한 목재 → 목재</strong>
+                                        <span>{{ "{:,}".format(row.exchange_count) }}회 교환 · 목재 {{ "{:,}".format(row.gained_wood) }}개 확보</span>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if result.best_summary.exchange.has_exchange %}
+                            <div class="step-highlight abidos-exchange-highlight">
+                                {% for item in result.best_summary.exchange.rows %}
+                                    <strong>{{ item.material }} → 생활의 가루 {{ "{:,}".format(item.exchange_count) }}회 교환</strong>
+                                    <span>{{ item.material }} {{ "{:,}".format(item.used_amount) }}개 사용 · 생활의 가루 {{ "{:,}".format(item.gained_powder) }}개 획득</span>
+                                {% endfor %}
+                            </div>
+                            <p class="step-note">생활의 가루 → 아비도스 목재 {{ "{:,}".format(result.best_summary.exchange.abidos_exchange_count) }}회 교환 · {{ "{:,}".format(result.best_summary.exchange.gained_abidos) }}개 확보</p>
+                        {% elif result.wood_procurement.selected_method != "튼튼한 목재 구매 후 교환" %}
+                            <p class="empty-state">추가 교환이 필요하지 않습니다.</p>
+                        {% endif %}
+                    </article>
+
+                    <article class="workflow-step">
+                        <div class="step-head"><span class="step-number craft">03</span><h3>제작</h3></div>
+                        <div class="step-highlight craft-highlight">
+                            <strong>{{ result.product.item_name }}</strong>
+                            <span>{{ "{:,}".format(result.product.craft_count) }}회 제작 · {{ "{:,}".format(result.product.total_output) }}개 생산</span>
+                        </div>
+                        <p class="step-note">회당 제작비 {{ "{:,}".format(result.product.craft_cost_per_craft) }}골드</p>
+                    </article>
+
+                    <article class="workflow-step">
+                        <div class="step-head"><span class="step-number remain">04</span><h3>제작 후 잔여</h3></div>
+                        {{ material_chips(result.best_summary.remaining_materials) }}
+                    </article>
+                </div>
+            </section>
+
+            <section class="section-card wood-section">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">WOOD PROCUREMENT</span>
+                        <h2>목재 조달 비교</h2>
+                        {% if result.wood_procurement.has_shortage %}
+                            <p>부족한 목재 {{ "{:,}".format(result.wood_procurement.missing_wood) }}개를 한 가지 방식으로 전량 조달합니다.</p>
+                        {% else %}
+                            <p>보유 목재로 제작 필요량을 모두 충족합니다.</p>
+                        {% endif %}
+                    </div>
+                    <span class="status-badge selected-route">{{ result.wood_procurement.selected_method }}</span>
+                </div>
+
+                {% if result.wood_procurement.has_shortage %}
+                    <div class="wood-grid">
+                        {% for row in result.wood_procurement.rows %}
+                            <article class="wood-option {% if row.is_selected %}selected{% endif %}">
+                                <div class="wood-option-head">
+                                    <div>
+                                        <span class="option-label">조달 방법</span>
+                                        <h3>{{ row.method }}</h3>
+                                    </div>
+                                    {% if row.is_selected %}<span class="choice-badge">최저 지출</span>{% endif %}
+                                </div>
+                                <strong class="option-cost">{{ "{:,}".format(row.cost) }}<small>골드</small></strong>
+                                <dl class="option-details">
+                                    <div><dt>구매 품목</dt><dd>{{ row.buy_material }}</dd></div>
+                                    <div><dt>구매 수량</dt><dd>{{ "{:,}".format(row.buy_amount) }}개</dd></div>
+                                    <div><dt>교환 횟수</dt><dd>{{ "{:,}".format(row.exchange_count) }}회</dd></div>
+                                    <div><dt>확보 목재</dt><dd>{{ "{:,}".format(row.gained_wood) }}개</dd></div>
+                                    <div><dt>남는 목재</dt><dd>{{ "{:,}".format(row.remaining_wood) }}개</dd></div>
+                                    <div><dt>남는 튼튼한 목재</dt><dd>{{ "{:,}".format(row.remaining_sturdy_wood) }}개</dd></div>
+                                </dl>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-purchase-banner">
+                        <span aria-hidden="true">✓</span>
+                        <div><strong>추가 목재 조달 없음</strong><p>보유 수량으로 바로 제작할 수 있습니다.</p></div>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="section-card exchange-comparison-section">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">EXCHANGE VALUE</span>
+                        <h2>아비도스 교환 재료 비교</h2>
+                        {% if result.exchange_material_comparison.has_shortage %}
+                            <p>부족한 아비도스 목재 {{ "{:,}".format(result.exchange_material_comparison.missing_abidos_wood) }}개를 한 종류의 재료로 충당하는 후보입니다.</p>
+                        {% else %}
+                            <p>보유 아비도스 목재로 제작 필요량을 모두 충족합니다.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if result.exchange_material_comparison.rows %}
+                    <div class="exchange-comparison-guide">
+                        <span><b>교환 재료 가치</b>는 사용 재료의 시장가치입니다.</span>
+                        <span><b>실제 후보 총지출</b>은 보유량·제작용 수요·100개 구매 올림·튼튼한 목재 조달까지 반영합니다.</span>
+                    </div>
+                    <div class="wood-grid exchange-value-grid">
+                        {% for row in result.exchange_material_comparison.rows %}
+                            <article class="wood-option exchange-value-option {% if row.is_lowest_cost %}selected{% endif %}">
+                                <div class="wood-option-head">
+                                    <div>
+                                        <span class="option-label">전량 교환 후보</span>
+                                        <h3>{{ row.material }} → 생활의 가루</h3>
+                                    </div>
+                                    <div class="comparison-badges">
+                                        {% if row.used_in_best %}<span class="status-badge possible">추천 플랜 사용</span>{% endif %}
+                                        {% if row.is_lowest_cost %}<span class="choice-badge">후보 최저지출</span>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="exchange-cost-pair">
+                                    <div>
+                                        <span>교환 재료 가치</span>
+                                        <strong>{{ "{:,}".format(row.material_value) }}골드</strong>
+                                    </div>
+                                    <div>
+                                        <span>실제 후보 총지출</span>
+                                        <strong>{{ "{:,}".format(row.total_candidate_cost) }}골드</strong>
+                                    </div>
+                                </div>
+                                <dl class="option-details exchange-option-details">
+                                    <div><dt>재료 교환 횟수</dt><dd>{{ "{:,}".format(row.exchange_count) }}회</dd></div>
+                                    <div><dt>사용 재료</dt><dd>{{ "{:,}".format(row.used_amount) }}개</dd></div>
+                                    <div><dt>획득 가루</dt><dd>{{ "{:,}".format(row.gained_powder) }}개</dd></div>
+                                    <div><dt>남는 가루</dt><dd>{{ "{:,}".format(row.remaining_powder) }}개</dd></div>
+                                    <div><dt>조달 방식</dt><dd>{{ row.procurement_method }}</dd></div>
+                                    <div><dt>실제 구매</dt><dd>{{ row.buy_material }} {{ "{:,}".format(row.buy_amount) }}개</dd></div>
+                                    <div><dt>해당 재료 조달비</dt><dd>{{ "{:,}".format(row.procurement_cost) }}골드</dd></div>
+                                </dl>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-purchase-banner">
+                        <span aria-hidden="true">✓</span>
+                        <div><strong>추가 교환 비교 없음</strong><p>현재 보유량에서는 아비도스 목재를 추가로 충당할 필요가 없습니다.</p></div>
+                    </div>
+                {% endif %}
+            </section>
+
+            <details class="disclosure section-card">
+                <summary>
+                    <div>
+                        <span class="section-kicker">ALTERNATIVES</span>
+                        <strong>다른 제작 플랜 {{ result.candidate_summaries|length }}개 비교하기</strong>
+                    </div>
+                    <span class="disclosure-action">펼쳐보기 <b>⌄</b></span>
+                </summary>
                 <div class="plan-grid">
-                    {% for plan in result.candidate_plans %}
-                        <article class="plan-card {% if plan.플랜이름 == result.best_plan.플랜이름 %}selected{% endif %}">
+                    {% for plan in result.candidate_summaries %}
+                        <article class="plan-card {% if plan.is_best %}selected{% endif %}">
                             <div class="plan-title">
-                                <h3>{{ plan.플랜이름 }}</h3>
-                                {{ render_value(plan.제작가능여부) }}
+                                <h3>{{ plan.name }}</h3>
+                                {% if plan.is_best %}
+                                    <span class="status-badge craft">추천</span>
+                                {% elif plan.can_craft %}
+                                    <span class="status-badge possible">가능</span>
+                                {% else %}
+                                    <span class="status-badge impossible">불가</span>
+                                {% endif %}
                             </div>
                             <div class="plan-stats">
-                                <div>
-                                    <span>구매 비용</span>
-                                    <strong>{{ plan.구매비용 }}</strong>
-                                </div>
-                                <div>
-                                    <span>사용 재료 가치</span>
-                                    <strong>{{ plan.사용재료가치 }}</strong>
-                                </div>
+                                <div><span>구매 비용</span><strong>{{ "{:,}".format(plan.purchase_cost) }}골드</strong></div>
+                                <div><span>교환 재료 가치</span><strong>{{ "{:,}".format(plan.exchange_material_value) }}골드</strong></div>
                             </div>
-                            <details>
-                                <summary>상세 보기</summary>
-                                <div class="detail-grid">
-                                    <section>
-                                        <h4>필요 재료</h4>
-                                        {{ render_value(plan.필요재료) }}
-                                    </section>
-                                    <section>
-                                        <h4>부족한 재료</h4>
-                                        {{ render_value(plan.부족한재료) }}
-                                    </section>
-                                    <section>
-                                        <h4>구매 계획</h4>
-                                        {{ render_value(plan.구매계획) }}
-                                    </section>
-                                    <section>
-                                        <h4>교환 계획</h4>
-                                        {{ render_value(plan.교환계획) }}
-                                    </section>
-                                    <section>
-                                        <h4>제작 후 남은 재료</h4>
-                                        {{ render_value(plan.제작후남은재료) }}
-                                    </section>
-                                </div>
-                            </details>
+                            <div class="mini-summary">
+                                <span>구매 {{ plan.purchase_items|length }}건</span>
+                                {% if plan.exchange.has_exchange %}<span>아비도스 교환 {{ "{:,}".format(plan.exchange.abidos_exchange_count) }}회</span>{% endif %}
+                            </div>
                         </article>
                     {% endfor %}
                 </div>
-            </section>
+            </details>
 
-            <section class="panel best-panel">
-                <div class="section-heading">
-                    <h2>최종 추천 플랜</h2>
-                    <span class="badge success">{{ result.best_plan.플랜이름 }}</span>
-                </div>
-                <div class="detail-grid">
-                    <section>
-                        <h4>구매 계획</h4>
-                        {{ render_value(result.best_plan.구매계획) }}
-                    </section>
-                    <section>
-                        <h4>교환 계획</h4>
-                        {{ render_value(result.best_plan.교환계획) }}
-                    </section>
-                    <section>
-                        <h4>제작 후 남은 재료</h4>
-                        {{ render_value(result.best_plan.제작후남은재료) }}
-                    </section>
-                    <section>
-                        <h4>현재 계산 가격</h4>
-                        {{ render_value(result.prices) }}
-                    </section>
+        {% else %}
+            <section class="welcome-card">
+                <div class="welcome-icon">✦</div>
+                <div>
+                    <h2>제작 조건을 입력해 보세요</h2>
+                    <p>최적 조달 경로부터 완제품 구매와의 비용 차이까지 한 번에 계산합니다.</p>
                 </div>
             </section>
         {% endif %}

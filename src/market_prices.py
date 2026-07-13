@@ -1,4 +1,4 @@
-from src.constants import CATEGORY_CODES
+from src.constants import CATEGORY_CODES, CRAFT_PRODUCTS
 from src.lostark_api import search_market_item
 from src.price_parser import extract_price_data
 
@@ -11,6 +11,23 @@ def get_lumber_prices() -> dict:
     return extract_price_data(result)
 
 
+def get_craft_product_prices() -> dict:
+    """거래소 API에서 제작 대상 완제품의 개당 가격 정보를 가져온다."""
+    prices = {}
+
+    for product in CRAFT_PRODUCTS.values():
+        result = search_market_item(
+            item_name=product["item_name"],
+            category_code=CATEGORY_CODES["재련재료"],
+        )
+        prices.update(extract_price_data(result))
+
+    return prices
+
+
 def get_market_prices() -> dict:
     """계산에 필요한 시장 가격 정보를 하나의 dict로 합친다."""
-    return get_lumber_prices()
+    return {
+        **get_lumber_prices(),
+        **get_craft_product_prices(),
+    }

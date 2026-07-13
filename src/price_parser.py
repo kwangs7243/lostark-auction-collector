@@ -8,12 +8,7 @@ def extract_price_data(data: dict) -> dict:
 
     price_data = {}
 
-    required_fields = [
-        "Name",
-        "CurrentMinPrice",
-        "YDayAvgPrice",
-        "RecentPrice",
-    ]
+    required_fields = ["Name", "CurrentMinPrice"]
 
     for item in data["Items"]:
         for field in required_fields:
@@ -22,8 +17,6 @@ def extract_price_data(data: dict) -> dict:
 
         price_data[item["Name"]] = {
             "최저가": item["CurrentMinPrice"],
-            "전일가": item["YDayAvgPrice"],
-            "최근가": item["RecentPrice"],
         }
 
     return price_data

@@ -1,35 +1,27 @@
 from src.constants import (
+    ABIDOS_FUSION_MATERIAL,
     ABIDOS_WOOD,
+    ADVANCED_ABIDOS_FUSION_MATERIAL,
     EXCHANGE_RECIPES,
     POWDER_TO_ABIDOS_RECIPE,
     PURCHASE_UNIT,
     SOFT_WOOD,
+    STURDY_WOOD,
     WOOD,
 )
 
 
-def _usable_prices(price_info: dict) -> list[int | float]:
-    """API 가격 정보 중 계산에 사용할 수 있는 숫자 가격만 추린다."""
-    candidates = [
-        price_info.get("최저가"),
-        price_info.get("최근가"),
-        price_info.get("전일가"),
-    ]
-    return [
-        price
-        for price in candidates
-        if isinstance(price, (int, float)) and price > 0
-    ]
-
-
 def build_calculation_prices(raw_prices: dict) -> dict:
-    """API 원본 가격에서 실제 계산에 사용할 보수적인 가격표를 만든다."""
+    """API 원본 가격에서 현재 최저가만 계산 가격으로 추린다."""
     prices = {}
 
     for name, price_info in raw_prices.items():
-        candidates = _usable_prices(price_info)
-        if candidates:
-            prices[name] = max(candidates)
+        current_min_price = price_info.get("최저가")
+        if (
+            isinstance(current_min_price, (int, float))
+            and current_min_price > 0
+        ):
+            prices[name] = current_min_price
 
     validate_required_prices(prices)
     return prices
@@ -39,8 +31,11 @@ def validate_required_prices(prices: dict) -> None:
     """제작 계산에 반드시 필요한 재료 가격이 모두 있는지 확인한다."""
     required_names = [
         WOOD,
+        STURDY_WOOD,
         SOFT_WOOD,
         ABIDOS_WOOD,
+        ABIDOS_FUSION_MATERIAL,
+        ADVANCED_ABIDOS_FUSION_MATERIAL,
     ]
 
     missing_names = [

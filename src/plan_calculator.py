@@ -16,8 +16,8 @@ from src.price_utils import get_priority_order
 from src.purchase_calculator import (
     apply_purchase_plan,
     apply_smart_purchase_plan,
-    build_abidos_fill_purchase_candidates,
     build_smart_purchase_plan,
+    build_smart_purchase_candidates,
     calculate_missing_cost,
     calculate_purchase_cost,
 )
@@ -327,53 +327,24 @@ def calculate_abidos_purchase_candidate_plans(
         owned_materials,
         required_materials,
     )
-    normal_missing_materials = {
-        name: amount
-        for name, amount in missing_materials.items()
-        if name != ABIDOS_WOOD
-    }
-    normal_purchase_plan = calculate_missing_cost(
+    purchase_candidates = build_smart_purchase_candidates(
         prices,
-        normal_missing_materials,
-    )
-    normal_after_purchase = apply_purchase_plan(
-        owned_materials,
-        normal_purchase_plan,
-    )
-    normal_purchase_cost = calculate_purchase_cost(normal_purchase_plan)
-    abidos_candidates = build_abidos_fill_purchase_candidates(
-        prices,
-        missing_materials.get(ABIDOS_WOOD, 0),
+        missing_materials,
     )
 
     plans = []
-    for candidate in abidos_candidates:
-        purchase_plan = {
-            "구매방식": candidate["구매방식"],
-            "직접구매계획": {
-                **normal_purchase_plan,
-                **candidate["직접구매계획"],
-            },
-            "교환용구매계획": candidate["교환용구매계획"],
-            "필요가루정보": candidate["필요가루정보"],
-            "구매후교환계획": candidate["구매후교환계획"],
-            "총비용": normal_purchase_cost + candidate["총비용"],
-        }
+    for purchase_plan in purchase_candidates:
         after_purchase_materials = apply_smart_purchase_plan(
-            normal_after_purchase,
-            {
-                "직접구매계획": candidate["직접구매계획"],
-                "교환용구매계획": candidate["교환용구매계획"],
-                "구매후교환계획": candidate["구매후교환계획"],
-            },
+            owned_materials,
+            purchase_plan,
         )
 
         plans.append(_build_plan_result(
-            plan_name=f"아비도스 충당 후보 - {candidate['구매방식']}",
+            plan_name=f"아비도스 충당 후보 - {purchase_plan['구매방식']}",
             craft_count=craft_count,
             owned_materials=owned_materials,
             required_materials=required_materials,
-            exchange_plan=candidate["구매후교환계획"],
+            exchange_plan=purchase_plan["구매후교환계획"],
             after_exchange_materials=None,
             purchase_plan=purchase_plan,
             after_purchase_materials=after_purchase_materials,
